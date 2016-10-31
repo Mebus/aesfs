@@ -182,13 +182,13 @@ class Passthrough(Operations):
 
     def read(self, path, length, offset, fh):
         full_path = self._full_path(path)
-        print("read - {}".format(full_path))
+        print("read - {}, lenght: {}, offset: {}, fh: {}".format(full_path, length, offset, fh))
         os.lseek(fh, offset, os.SEEK_SET)
         return os.read(fh, length)
 
     def write(self, path, buf, offset, fh):
         full_path = self._full_path(path)
-        print("write - {}".format(full_path))
+        print("write - {}, offset: {}, fh: {}".format(full_path, offset, fh))
         os.lseek(fh, offset, os.SEEK_SET)
         return os.write(fh, buf)
 
