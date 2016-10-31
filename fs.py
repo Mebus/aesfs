@@ -75,25 +75,30 @@ class Passthrough(Operations):
 
     def access(self, path, mode):
         full_path = self._full_path(path)
+        print("access - {}".format(full_path))
         if not os.access(full_path, mode):
             raise FuseOSError(errno.EACCES)
 
     def chmod(self, path, mode):
         full_path = self._full_path(path)
+        print("chmod - {}".format(full_path))
         return os.chmod(full_path, mode)
 
     def chown(self, path, uid, gid):
         full_path = self._full_path(path)
+        print("chown - {}".format(full_path))
         return os.chown(full_path, uid, gid)
 
     def getattr(self, path, fh=None):
         full_path = self._full_path(path)
+        print("getattr - {}".format(full_path))
         st = os.lstat(full_path)
         return dict((key, getattr(st, key)) for key in ('st_atime', 'st_ctime',
                      'st_gid', 'st_mode', 'st_mtime', 'st_nlink', 'st_size', 'st_uid'))
 
     def readdir(self, path, fh):
         full_path = self._full_path(path)
+        print("readdir - {}".format(full_path))
 
         dirents = ['.', '..']
         if os.path.isdir(full_path):
@@ -103,6 +108,7 @@ class Passthrough(Operations):
 
     def readlink(self, path):
         full_path = self._full_path(path)
+        print("readlink - {}".format(full_path))
         pathname = os.readlink(full_path)
         if pathname.startswith("/"):
             # Path name is absolute, sanitize it.
@@ -112,18 +118,22 @@ class Passthrough(Operations):
 
     def mknod(self, path, mode, dev):
         full_path = self._full_path(path)
+        print("mknod - {}".format(full_path))
         return os.mknod(full_path, mode, dev)
 
     def rmdir(self, path):
         full_path = self._full_path(path)
+        print("rmdir - {}".format(full_path))
         return os.rmdir(full_path)
 
     def mkdir(self, path, mode):
         full_path = self._full_path(path)
+        print("mkdir - {}".format(full_path))
         return os.mkdir(full_path, mode)
 
     def statfs(self, path):
         full_path = self._full_path(path)
+        print("statfs - {}".format(full_path))
         stv = os.statvfs(full_path)
         return dict((key, getattr(stv, key)) for key in ('f_bavail', 'f_bfree',
             'f_blocks', 'f_bsize', 'f_favail', 'f_ffree', 'f_files', 'f_flag',
@@ -131,62 +141,76 @@ class Passthrough(Operations):
 
     def unlink(self, path):
         full_path = self._full_path(path)
+        print("unlink - {}".format(full_path))
         return os.unlink(full_path)
 
     def symlink(self, name, target):
         full_path = self._full_path(target)
+        print("symlink - {}".format(full_path))
         return os.symlink(name, full_path)
 
     def rename(self, old, new):
         full_path_old = self._full_path(old)
         full_path_new = self._full_path(new)
+        print("rename - {} to {}".format(full_path_old, full_path_new))
         return os.rename(full_path_old, full_path_new)
 
     def link(self, target, name):
         full_path_name = self._full_path(name)
         full_path_trgt = self._full_path(trgt)
+        print("link - {} to {}".format(full_path_name, full_path_trgt))
         return os.link(full_path_trgt, full_path_name)
 
     def utimens(self, path, times=None):
         full_path = self._full_path(path)
+        print("utimens - {}".format(full_path))
         return os.utime(full_path, times)
+
 
     # File methods
     # ============
 
     def open(self, path, flags):
         full_path = self._full_path(path)
+        print("open - {}".format(full_path))
         return os.open(full_path, flags)
 
     def create(self, path, mode, fi=None):
         full_path = self._full_path(path)
+        print("create - {}".format(full_path))
         return os.open(full_path, os.O_WRONLY | os.O_CREAT, mode)
 
     def read(self, path, length, offset, fh):
         full_path = self._full_path(path)
+        print("read - {}".format(full_path))
         os.lseek(fh, offset, os.SEEK_SET)
         return os.read(fh, length)
 
     def write(self, path, buf, offset, fh):
         full_path = self._full_path(path)
+        print("write - {}".format(full_path))
         os.lseek(fh, offset, os.SEEK_SET)
         return os.write(fh, buf)
 
     def truncate(self, path, length, fh=None):
         full_path = self._full_path(path)
+        print("truncate - {}".format(full_path))
         with open(full_path, 'r+') as f:
             f.truncate(length)
 
     def flush(self, path, fh):
         full_path = self._full_path(path)
+        print("flush - {}".format(full_path))
         return os.fsync(fh)
 
     def release(self, path, fh):
         full_path = self._full_path(path)
+        print("release - {}".format(full_path))
         return os.close(fh)
 
     def fsync(self, path, fdatasync, fh):
         full_path = self._full_path(path)
+        print("fsync - {}".format(full_path))
         return self.flush(path, fh)
 
 
