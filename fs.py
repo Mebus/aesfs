@@ -102,7 +102,8 @@ class Passthrough(Operations):
             yield r
 
     def readlink(self, path):
-        pathname = os.readlink(self._full_path(path))
+        full_path = self._full_path(path)
+        pathname = os.readlink(full_path)
         if pathname.startswith("/"):
             # Path name is absolute, sanitize it.
             return os.path.relpath(pathname, self.root)
@@ -110,14 +111,16 @@ class Passthrough(Operations):
             return pathname
 
     def mknod(self, path, mode, dev):
-        return os.mknod(self._full_path(path), mode, dev)
+        full_path = self._full_path(path)
+        return os.mknod(full_path, mode, dev)
 
     def rmdir(self, path):
         full_path = self._full_path(path)
         return os.rmdir(full_path)
 
     def mkdir(self, path, mode):
-        return os.mkdir(self._full_path(path), mode)
+        full_path = self._full_path(path)
+        return os.mkdir(full_path, mode)
 
     def statfs(self, path):
         full_path = self._full_path(path)
@@ -127,19 +130,26 @@ class Passthrough(Operations):
             'f_frsize', 'f_namemax'))
 
     def unlink(self, path):
-        return os.unlink(self._full_path(path))
+        full_path = self._full_path(path)
+        return os.unlink(full_path)
 
     def symlink(self, name, target):
-        return os.symlink(name, self._full_path(target))
+        full_path = self._full_path(target)
+        return os.symlink(name, full_path)
 
     def rename(self, old, new):
-        return os.rename(self._full_path(old), self._full_path(new))
+        full_path_old = self._full_path(old)
+        full_path_new = self._full_path(new)
+        return os.rename(full_path_old, full_path_new)
 
     def link(self, target, name):
-        return os.link(self._full_path(target), self._full_path(name))
+        full_path_name = self._full_path(name)
+        full_path_trgt = self._full_path(trgt)
+        return os.link(full_path_trgt, full_path_name)
 
     def utimens(self, path, times=None):
-        return os.utime(self._full_path(path), times)
+        full_path = self._full_path(path)
+        return os.utime(full_path, times)
 
     # File methods
     # ============
@@ -153,10 +163,12 @@ class Passthrough(Operations):
         return os.open(full_path, os.O_WRONLY | os.O_CREAT, mode)
 
     def read(self, path, length, offset, fh):
+        full_path = self._full_path(path)
         os.lseek(fh, offset, os.SEEK_SET)
         return os.read(fh, length)
 
     def write(self, path, buf, offset, fh):
+        full_path = self._full_path(path)
         os.lseek(fh, offset, os.SEEK_SET)
         return os.write(fh, buf)
 
@@ -166,12 +178,15 @@ class Passthrough(Operations):
             f.truncate(length)
 
     def flush(self, path, fh):
+        full_path = self._full_path(path)
         return os.fsync(fh)
 
     def release(self, path, fh):
+        full_path = self._full_path(path)
         return os.close(fh)
 
     def fsync(self, path, fdatasync, fh):
+        full_path = self._full_path(path)
         return self.flush(path, fh)
 
 
