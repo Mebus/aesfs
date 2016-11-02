@@ -59,6 +59,7 @@ from fuse import FUSE, FuseOSError, Operations
 
 
 class Passthrough(Operations):
+
     def __init__(self, root):
         self.root = root
 
@@ -94,8 +95,14 @@ class Passthrough(Operations):
         full_path = self._full_path(path)
         logging.debug("getattr - {}".format(full_path))
         st = os.lstat(full_path)
-        return dict((key, getattr(st, key)) for key in ('st_atime', 'st_ctime',
-                     'st_gid', 'st_mode', 'st_mtime', 'st_nlink', 'st_size', 'st_uid'))
+        return dict((key, getattr(st, key)) for key in ('st_atime',
+                                                        'st_ctime',
+                                                        'st_gid',
+                                                        'st_mode',
+                                                        'st_mtime',
+                                                        'st_nlink',
+                                                        'st_size',
+                                                        'st_uid'))
 
     def readdir(self, path, fh):
         full_path = self._full_path(path)
@@ -136,9 +143,16 @@ class Passthrough(Operations):
         full_path = self._full_path(path)
         logging.debug("statfs - {}".format(full_path))
         stv = os.statvfs(full_path)
-        return dict((key, getattr(stv, key)) for key in ('f_bavail', 'f_bfree',
-            'f_blocks', 'f_bsize', 'f_favail', 'f_ffree', 'f_files', 'f_flag',
-            'f_frsize', 'f_namemax'))
+        return dict((key, getattr(stv, key)) for key in ('f_bavail',
+                                                         'f_bfree',
+                                                         'f_blocks',
+                                                         'f_bsize',
+                                                         'f_favail',
+                                                         'f_ffree',
+                                                         'f_files',
+                                                         'f_flag',
+                                                         'f_frsize',
+                                                         'f_namemax'))
 
     def unlink(self, path):
         full_path = self._full_path(path)
@@ -167,7 +181,6 @@ class Passthrough(Operations):
         logging.info("utimens - {}".format(full_path))
         return os.utime(full_path, times)
 
-
     # File methods
     # ============
 
@@ -183,13 +196,20 @@ class Passthrough(Operations):
 
     def read(self, path, length, offset, fh):
         full_path = self._full_path(path)
-        logging.info("read - {}, lenght: {}, offset: {}, fh: {}".format(full_path, length, offset, fh))
+        logging.info("read - {}, lenght: {}, offset: {}, fh: {}".format(
+            full_path,
+            length,
+            offset,
+            fh))
         os.lseek(fh, offset, os.SEEK_SET)
         return os.read(fh, length)
 
     def write(self, path, buf, offset, fh):
         full_path = self._full_path(path)
-        logging.info("write - {}, offset: {}, fh: {}".format(full_path, offset, fh))
+        logging.info("write - {}, offset: {}, fh: {}".format(
+            full_path,
+            offset,
+            fh))
         os.lseek(fh, offset, os.SEEK_SET)
         return os.write(fh, buf)
 
