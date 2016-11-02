@@ -196,10 +196,10 @@ class Passthrough(Operations):
 
     def read(self, path, length, offset, fh):
         full_path = self._full_path(path)
-        logging.info("read - {}, lenght: {}, offset: {}, fh: {}".format(
+        logging.info("read - {}, offset: {}, length: {}, fh: {}".format(
             full_path,
-            length,
             offset,
+            length,
             fh))
         os.lseek(fh, offset, os.SEEK_SET)
         return os.read(fh, length)
