@@ -56,12 +56,17 @@ import errno
 import logging
 
 from fuse import FUSE, FuseOSError, Operations
+from cryptr import Cryptr
 
 
-class Passthrough(Operations):
+class aesfs(Operations):
+    """
+    Implements callbacks from the FUSE library and adds crypto behavior.
+    """
 
-    def __init__(self, root):
+    def __init__(self, root, pw):
         self.root = root
+        self.pw = pw
 
     # Helpers
     # =======
@@ -95,7 +100,7 @@ class Passthrough(Operations):
         full_path = self._full_path(path)
         logging.debug("getattr - {}".format(full_path))
         st = os.lstat(full_path)
-        return dict((key, getattr(st, key)) for key in ('st_atime',
+        stat = dict((key, getattr(st, key)) for key in ('st_atime',
                                                         'st_ctime',
                                                         'st_gid',
                                                         'st_mode',
@@ -103,6 +108,13 @@ class Passthrough(Operations):
                                                         'st_nlink',
                                                         'st_size',
                                                         'st_uid'))
+        if os.path.isfile(full_path):
+            read_size = self.statfs(path)['f_frsize']
+            file_size = stat['st_size']
+            i = (file_size - 1) // (16 + 16 + read_size)
+            file_size -= (i + 1) * (16 + 16)
+            stat['st_size'] = file_size
+        return stat
 
     def readdir(self, path, fh):
         full_path = self._full_path(path)
@@ -187,12 +199,26 @@ class Passthrough(Operations):
     def open(self, path, flags):
         full_path = self._full_path(path)
         logging.info("open - {}".format(full_path))
+        # Open for reading even if only writing is requested, to get crypto
+        # parameters:
+        #
+        # * If flags % 2 == 0: reading. Change nothing
+        # * If flags % 2 != 0: writing, e.g. 'w'(riting) or 'a'(ppending).
+        #                      Change to 'w+' or 'a+' which lead to
+        #                      additional read access
+        #
+        # See: https://github.com/mafintosh/fuse-bindings/issues/25
+        if flags % 2 != 0:
+            flags += 1
+        self.cryptr = Cryptr(pw=self.pw, rand_salt=b'0101010101010101')
         return os.open(full_path, flags)
 
     def create(self, path, mode, fi=None):
         full_path = self._full_path(path)
         logging.info("create - {}".format(full_path))
-        return os.open(full_path, os.O_WRONLY | os.O_CREAT, mode)
+        # Create cipher object and write necessary data at the beginning
+        self.cryptr = Cryptr(pw=self.pw, rand_salt=b'0101010101010101')
+        return os.open(full_path, os.O_RDWR | os.O_CREAT, mode)
 
     def read(self, path, length, offset, fh):
         full_path = self._full_path(path)
@@ -201,8 +227,21 @@ class Passthrough(Operations):
             offset,
             length,
             fh))
-        os.lseek(fh, offset, os.SEEK_SET)
-        return os.read(fh, length)
+        read_size = self.statfs(path)['f_frsize']
+        file_size = self.getattr(path)['st_size']
+        rounds = length // read_size
+        pt = b''
+        for i in range(0, rounds):
+            start = offset + (offset // read_size) * (16 + 16) + i * (16 + 16 + read_size)
+            os.lseek(fh, start, os.SEEK_SET)
+            n = os.read(fh, 16)
+            m = os.read(fh, 16)
+            size = min(file_size, read_size)
+            if size <= 0:
+                size = 0
+            c = os.read(fh, size)
+            pt += self.cryptr.decrypt(n, m, c)
+        return pt
 
     def write(self, path, buf, offset, fh):
         full_path = self._full_path(path)
@@ -210,8 +249,29 @@ class Passthrough(Operations):
             full_path,
             offset,
             fh))
-        os.lseek(fh, offset, os.SEEK_SET)
-        return os.write(fh, buf)
+        read_size = self.statfs(path)['f_frsize']
+        start = (offset // read_size) * (16 + 16 + read_size)
+        length = len(buf)
+        pt = b''
+        if offset % read_size != 0:
+            os.lseek(fh, start, os.SEEK_SET)
+            n = os.read(fh, 16)
+            m = os.read(fh, 16)
+            c = os.read(fh, read_size - length)
+            pt += self.cryptr.decrypt(n, m, c)
+        pt += buf
+        rounds = length // read_size
+        if rounds == 0:
+            ct = self.cryptr.encrypt(pt)
+            os.lseek(fh, start, os.SEEK_SET)
+            os.write(fh, ct)
+        else:
+            for i in range(0, rounds):
+                ct = self.cryptr.encrypt(pt[i * read_size:(i + 1) * read_size])
+                start = offset + (offset // read_size) * (16 + 16) + i * (16 + 16 + read_size)
+                os.lseek(fh, start, os.SEEK_SET)
+                os.write(fh, ct)
+        return length
 
     def truncate(self, path, length, fh=None):
         full_path = self._full_path(path)
@@ -237,7 +297,8 @@ class Passthrough(Operations):
 
 def main(mountpoint, root):
     logging.basicConfig(level=logging.INFO)
-    FUSE(Passthrough(root), mountpoint, nothreads=True, foreground=True)
+    pw = 'HJy6V3ZDSMqf7LhTcKQJFesmzjCAVOiA'
+    FUSE(aesfs(root, pw), mountpoint, nothreads=True, foreground=True)
 
 if __name__ == '__main__':
     main(sys.argv[2], sys.argv[1])
