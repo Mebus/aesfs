@@ -231,18 +231,18 @@ class aesfs(Operations):
             offset,
             length,
             fh))
+        pt = b''
         read_size = self.statfs(path)['f_frsize']
         file_size = self.getattr(path)['st_size']
+        size = min(file_size, read_size)
+        if size <= 0:
+            return pt
         rounds = length // read_size
-        pt = b''
         for i in range(0, rounds):
             start = self._real_offset(offset, i, read_size)
             os.lseek(fh, start, os.SEEK_SET)
             n = os.read(fh, 16)
             m = os.read(fh, 16)
-            size = min(file_size, read_size)
-            if size <= 0:
-                size = 0
             c = os.read(fh, size)
             pt += self.cryptr.decrypt(n, m, c)
         return pt
