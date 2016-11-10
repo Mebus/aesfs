@@ -261,7 +261,7 @@ class aesfs(Operations):
             offset,
             fh))
         read_size = self.statfs(path)['f_frsize']
-        start = (offset // read_size) * (16 + 16 + read_size)
+        start = self._real_offset(offset, 0, read_size)
         length = len(buf)
         pt = b''
         if offset % read_size != 0:
