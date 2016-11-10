@@ -248,10 +248,14 @@ class aesfs(Operations):
         size = min(file_size, read_size)
         if size <= 0:
             return pt
-        rounds = length // read_size
-        for i in range(0, rounds):
+        rounds = (length - 1) // read_size
+        i = 0
+        while True:
             start = self._real_offset(offset, i, read_size)
             pt += self._decrypt(size, start, fh)
+            if i == rounds:
+                break
+            i += 1
         return pt
 
     def write(self, path, buf, offset, fh):
@@ -267,13 +271,14 @@ class aesfs(Operations):
         if offset % read_size != 0:
             pt += self._decrypt(read_size - length, start, fh)
         pt += buf
-        rounds = length // read_size
-        if rounds == 0:
-            self._encrypt(pt, start, fh)
-        else:
-            for i in range(0, rounds):
-                start = self._real_offset(offset, i, read_size)
-                self._encrypt(pt[i * read_size:(i + 1) * read_size], start, fh)
+        rounds = (length - 1) // read_size
+        i = 0
+        while True:
+            start = self._real_offset(offset, i, read_size)
+            self._encrypt(pt[i * read_size:(i + 1) * read_size], start, fh)
+            if i == rounds:
+                break
+            i += 1
         return length
 
     def truncate(self, path, length, fh=None):
