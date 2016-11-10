@@ -88,6 +88,10 @@ class aesfs(Operations):
         c = os.read(fh, length)
         return self.cryptr.decrypt(n, m, c)
 
+    def _encrypt(self, buf, offset, fh):
+        os.lseek(fh, offset, os.SEEK_SET)
+        os.write(fh, self.cryptr.encrypt(buf))
+
     # Filesystem methods
     # ==================
 
@@ -265,15 +269,11 @@ class aesfs(Operations):
         pt += buf
         rounds = length // read_size
         if rounds == 0:
-            ct = self.cryptr.encrypt(pt)
-            os.lseek(fh, start, os.SEEK_SET)
-            os.write(fh, ct)
+            self._encrypt(pt, start, fh)
         else:
             for i in range(0, rounds):
-                ct = self.cryptr.encrypt(pt[i * read_size:(i + 1) * read_size])
                 start = self._real_offset(offset, i, read_size)
-                os.lseek(fh, start, os.SEEK_SET)
-                os.write(fh, ct)
+                self._encrypt(pt[i * read_size:(i + 1) * read_size], start, fh)
         return length
 
     def truncate(self, path, length, fh=None):
