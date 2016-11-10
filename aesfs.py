@@ -81,6 +81,13 @@ class aesfs(Operations):
     def _real_offset(self, offset, i, read_size):
         return offset + (offset // read_size) * (16 + 16) + i * (16 + 16 + read_size)
 
+    def _decrypt(self, length, offset, fh):
+        os.lseek(fh, offset, os.SEEK_SET)
+        n = os.read(fh, 16)
+        m = os.read(fh, 16)
+        c = os.read(fh, length)
+        return self.cryptr.decrypt(n, m, c)
+
     # Filesystem methods
     # ==================
 
@@ -240,11 +247,7 @@ class aesfs(Operations):
         rounds = length // read_size
         for i in range(0, rounds):
             start = self._real_offset(offset, i, read_size)
-            os.lseek(fh, start, os.SEEK_SET)
-            n = os.read(fh, 16)
-            m = os.read(fh, 16)
-            c = os.read(fh, size)
-            pt += self.cryptr.decrypt(n, m, c)
+            pt += self._decrypt(size, start, fh)
         return pt
 
     def write(self, path, buf, offset, fh):
@@ -258,11 +261,7 @@ class aesfs(Operations):
         length = len(buf)
         pt = b''
         if offset % read_size != 0:
-            os.lseek(fh, start, os.SEEK_SET)
-            n = os.read(fh, 16)
-            m = os.read(fh, 16)
-            c = os.read(fh, read_size - length)
-            pt += self.cryptr.decrypt(n, m, c)
+            pt += self._decrypt(read_size - length, start, fh)
         pt += buf
         rounds = length // read_size
         if rounds == 0:
