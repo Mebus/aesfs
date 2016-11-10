@@ -78,6 +78,9 @@ class aesfs(Operations):
         path = os.path.join(self.root, partial)
         return path
 
+    def _real_offset(self, offset, i, read_size):
+        return offset + (offset // read_size) * (16 + 16) + i * (16 + 16 + read_size)
+
     # Filesystem methods
     # ==================
 
@@ -233,7 +236,7 @@ class aesfs(Operations):
         rounds = length // read_size
         pt = b''
         for i in range(0, rounds):
-            start = offset + (offset // read_size) * (16 + 16) + i * (16 + 16 + read_size)
+            start = self._real_offset(offset, i, read_size)
             os.lseek(fh, start, os.SEEK_SET)
             n = os.read(fh, 16)
             m = os.read(fh, 16)
@@ -269,7 +272,7 @@ class aesfs(Operations):
         else:
             for i in range(0, rounds):
                 ct = self.cryptr.encrypt(pt[i * read_size:(i + 1) * read_size])
-                start = offset + (offset // read_size) * (16 + 16) + i * (16 + 16 + read_size)
+                start = self._real_offset(offset, i, read_size)
                 os.lseek(fh, start, os.SEEK_SET)
                 os.write(fh, ct)
         return length
