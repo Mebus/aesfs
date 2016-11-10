@@ -54,6 +54,7 @@ import os
 import sys
 import errno
 import logging
+import argparse
 
 from fuse import FUSE, FuseOSError, Operations
 from cryptr import Cryptr
@@ -295,10 +296,29 @@ class aesfs(Operations):
         return self.flush(path, fh)
 
 
-def main(mountpoint, root):
-    logging.basicConfig(level=logging.INFO)
+def main(mountpoint, root, foreground, verbosity):
+    if verbosity >= 2:
+        logging.basicConfig(level=logging.DEBUG)
+        foreground = True
+    elif verbosity >= 1:
+        logging.basicConfig(level=logging.INFO)
+        foreground = True
     pw = 'HJy6V3ZDSMqf7LhTcKQJFesmzjCAVOiA'
-    FUSE(aesfs(root, pw), mountpoint, nothreads=True, foreground=True)
+    FUSE(aesfs(root, pw), mountpoint, nothreads=True, foreground=foreground)
 
 if __name__ == '__main__':
-    main(sys.argv[2], sys.argv[1])
+    parser = argparse.ArgumentParser()
+    parser.add_argument("encrypted", metavar="~/encrypted/",
+                        help="folder containing your encrypted files")
+    parser.add_argument("decrypted", metavar="~/decrypted/",
+                        help="mountpoint containing the decrypted " +
+                        "versions of your files")
+    parser.add_argument("-f", "--foreground", action="store_true",
+                        help="let the program run in the foreground")
+    parser.add_argument("-V", "--verbosity", action="count", default=0,
+                        help="implies -f, increase verbosity: " +
+                        "-V: INFO, -VV: DEBUG")
+    parser.add_argument("-v", "--version", action='version', version='0.1.0')
+    args = parser.parse_args()
+
+    main(args.decrypted, args.encrypted, args.foreground, args.verbosity)
