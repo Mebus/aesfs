@@ -79,9 +79,10 @@ class aesfs(Operations):
         return path
 
     def _real_offset(self, offset, i, read_size):
-        return offset + (offset // read_size) * (16 + 16) + i * (16 + 16 + read_size)
+        return offset + (offset // read_size) * (16 + 16) + i * (16 + 16 + read_size) + Cryptr.rand_salt_len
 
     def _real_size(self, file_size, read_size):
+        file_size -= Cryptr.rand_salt_len
         i = (file_size - 1) // (16 + 16 + read_size)
         file_size -= (i + 1) * (16 + 16)
         return file_size
@@ -228,15 +229,19 @@ class aesfs(Operations):
         # See: https://github.com/mafintosh/fuse-bindings/issues/25
         if flags % 2 != 0:
             flags += 1
-        self.cryptr = Cryptr(pw=self.pw, rand_salt=b'0101010101010101')
-        return os.open(full_path, flags)
+        fh = os.open(full_path, flags)
+        rand_salt = os.read(fh, Cryptr.rand_salt_len)
+        self.cryptr = Cryptr(pw=self.pw, rand_salt=rand_salt)
+        return fh
 
     def create(self, path, mode, fi=None):
         full_path = self._full_path(path)
         logging.info("create - {}".format(full_path))
         # Create cipher object and write necessary data at the beginning
-        self.cryptr = Cryptr(pw=self.pw, rand_salt=b'0101010101010101')
-        return os.open(full_path, os.O_RDWR | os.O_CREAT, mode)
+        self.cryptr = Cryptr(pw=self.pw)
+        fh = os.open(full_path, os.O_RDWR | os.O_CREAT, mode)
+        os.write(fh, self.cryptr.get_rand_salt())
+        return fh
 
     def read(self, path, length, offset, fh):
         full_path = self._full_path(path)

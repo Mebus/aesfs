@@ -29,6 +29,8 @@ class Cryptr:
     Handles the crypto parameters and the actual en- and decryption.
     """
 
+    rand_salt_len = 16
+
     def __init__(self, *args, **kwargs):
         """
         Constructor.
@@ -49,7 +51,7 @@ class Cryptr:
 
         # In bytes, doc says it should be at least 8 bytes and has not to be
         # kept secret. Must be chosen randomly though
-        self.rand_salt = kwargs.get('rand_salt', urandom(16))
+        self.rand_salt = kwargs.get('rand_salt', urandom(Cryptr.rand_salt_len))
 
         # In bytes, AES 256 needs 32 bytes
         crypt_key_len = 32
