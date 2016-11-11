@@ -81,6 +81,11 @@ class aesfs(Operations):
     def _real_offset(self, offset, i, read_size):
         return offset + (offset // read_size) * (16 + 16) + i * (16 + 16 + read_size)
 
+    def _real_size(self, file_size, read_size):
+        i = (file_size - 1) // (16 + 16 + read_size)
+        file_size -= (i + 1) * (16 + 16)
+        return file_size
+
     def _decrypt(self, length, offset, fh):
         os.lseek(fh, offset, os.SEEK_SET)
         n = os.read(fh, 16)
@@ -126,9 +131,7 @@ class aesfs(Operations):
         if os.path.isfile(full_path):
             read_size = self.statfs(path)['f_frsize']
             file_size = stat['st_size']
-            i = (file_size - 1) // (16 + 16 + read_size)
-            file_size -= (i + 1) * (16 + 16)
-            stat['st_size'] = file_size
+            stat['st_size'] = self._real_size(file_size, read_size)
         return stat
 
     def readdir(self, path, fh):
