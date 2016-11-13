@@ -217,7 +217,6 @@ class aesfs(Operations):
 
     def open(self, path, flags):
         full_path = self._full_path(path)
-        logging.info("open - {}".format(full_path))
         # Open for reading even if only writing is requested, to get crypto
         # parameters:
         # * If flags % 2 == 0: reading. Change nothing
@@ -228,6 +227,9 @@ class aesfs(Operations):
         if flags % 2 != 0:
             flags += 1
         fh = os.open(full_path, flags)
+        logging.info("open - {}, fh: {}".format(
+            full_path,
+            fh))
         rand_salt = os.read(fh, Cryptr.rand_salt_len)
         self.cryptr = Cryptr(pw=self.pw, rand_salt=rand_salt)
         return fh
@@ -289,18 +291,24 @@ class aesfs(Operations):
 
     def truncate(self, path, length, fh=None):
         full_path = self._full_path(path)
-        logging.info("truncate - {}".format(full_path))
+        logging.info("truncate - {}, length: {}".format(
+            full_path,
+            length))
         with open(full_path, 'r+') as f:
             f.truncate(length)
 
     def flush(self, path, fh):
         full_path = self._full_path(path)
-        logging.info("flush - {}".format(full_path))
+        logging.info("release - {}, fh: {}".format(
+            full_path,
+            fh))
         return os.fsync(fh)
 
     def release(self, path, fh):
         full_path = self._full_path(path)
-        logging.info("release - {}".format(full_path))
+        logging.info("release - {}, fh: {}".format(
+            full_path,
+            fh))
         return os.close(fh)
 
     def fsync(self, path, fdatasync, fh):
