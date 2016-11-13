@@ -52,6 +52,7 @@ from __future__ import with_statement
 
 import os
 import sys
+import json
 import errno
 import base64
 import logging
@@ -69,8 +70,23 @@ class aesfs(Operations):
     def __init__(self, root, pw):
         self.root = root
         self.pw = pw
-        self.file_name_cryptr = Cryptr(pw=self.pw, rand_salt=b'0101010101010101')
+        self.config_name = '.aesfs.json'
         self.file_cryptrs = {}
+
+        config_file = os.path.join(self.root, self.config_name)
+
+        if not os.path.isfile(config_file):
+            self.file_name_cryptr = Cryptr(pw=self.pw)
+            rand_salt = self.file_name_cryptr.get_rand_salt()
+            data = {}
+            data['rand_salt'] = base64.b64encode(rand_salt).decode('utf-8')
+            with open(config_file, 'w') as f:
+                json.dump(data, f)
+        else:
+            with open(config_file, 'r') as f:
+                data = json.load(f)
+            rand_salt = base64.b64decode(data['rand_salt'])
+            self.file_name_cryptr = Cryptr(pw=self.pw, rand_salt=rand_salt)
 
     # Helpers
     # =======
@@ -155,6 +171,9 @@ class aesfs(Operations):
             p = []
             items = os.listdir(full_path)
             for item in items:
+                # Configuration file name is unencrypted
+                if item == self.config_name:
+                    continue
                 b = item.replace('_', '/')
                 e = base64.b64decode(b)
                 d = self.file_name_cryptr.decrypt_ecb(e)
