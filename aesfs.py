@@ -291,6 +291,8 @@ class aesfs(Operations):
 
     def truncate(self, path, length, fh=None):
         full_path = self._full_path(path)
+        read_size = self.statfs(path)['f_frsize']
+        length = self._real_offset(0, 0, read_size)
         logging.info("truncate - {}, length: {}".format(
             full_path,
             length))
