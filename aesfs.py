@@ -220,12 +220,10 @@ class aesfs(Operations):
         logging.info("open - {}".format(full_path))
         # Open for reading even if only writing is requested, to get crypto
         # parameters:
-        #
         # * If flags % 2 == 0: reading. Change nothing
         # * If flags % 2 != 0: writing, e.g. 'w'(riting) or 'a'(ppending).
         #                      Change to 'w+' or 'a+' which lead to
         #                      additional read access
-        #
         # See: https://github.com/mafintosh/fuse-bindings/issues/25
         if flags % 2 != 0:
             flags += 1
