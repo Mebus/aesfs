@@ -63,7 +63,7 @@ class Cryptr:
         self.crypt_key = PBKDF2(self.pw, self.rand_salt,
                                 dkLen=crypt_key_len, count=iterations)
 
-    def encrypt(self, pt):
+    def encrypt_gcm(self, pt):
         cipher = AES.new(self.crypt_key, AES.MODE_GCM)
         n = cipher.nonce
         c = cipher.encrypt(pt)
@@ -72,7 +72,7 @@ class Cryptr:
             return b''
         return n + m + c
 
-    def decrypt(self, n, m, c):
+    def decrypt_gcm(self, n, m, c):
         if not n or not m or not c:
             return b''
         cipher = AES.new(self.crypt_key, AES.MODE_GCM, n)

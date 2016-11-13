@@ -93,11 +93,11 @@ class aesfs(Operations):
         n = os.read(fh, 16)
         m = os.read(fh, 16)
         c = os.read(fh, length)
-        return self.file_cryptrs[fh].decrypt(n, m, c)
+        return self.file_cryptrs[fh].decrypt_gcm(n, m, c)
 
     def _encrypt(self, buf, offset, fh):
         os.lseek(fh, offset, os.SEEK_SET)
-        os.write(fh, self.file_cryptrs[fh].encrypt(buf))
+        os.write(fh, self.file_cryptrs[fh].encrypt_gcm(buf))
 
     # Filesystem methods
     # ==================
