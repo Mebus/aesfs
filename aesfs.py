@@ -68,7 +68,7 @@ class aesfs(Operations):
     def __init__(self, root, pw):
         self.root = root
         self.pw = pw
-        self.cryptrs = {}
+        self.file_cryptrs = {}
 
     # Helpers
     # =======
@@ -93,11 +93,11 @@ class aesfs(Operations):
         n = os.read(fh, 16)
         m = os.read(fh, 16)
         c = os.read(fh, length)
-        return self.cryptrs[fh].decrypt(n, m, c)
+        return self.file_cryptrs[fh].decrypt(n, m, c)
 
     def _encrypt(self, buf, offset, fh):
         os.lseek(fh, offset, os.SEEK_SET)
-        os.write(fh, self.cryptrs[fh].encrypt(buf))
+        os.write(fh, self.file_cryptrs[fh].encrypt(buf))
 
     # Filesystem methods
     # ==================
@@ -232,7 +232,7 @@ class aesfs(Operations):
             full_path,
             fh))
         rand_salt = os.read(fh, Cryptr.rand_salt_len)
-        self.cryptrs[fh] = Cryptr(pw=self.pw, rand_salt=rand_salt)
+        self.file_cryptrs[fh] = Cryptr(pw=self.pw, rand_salt=rand_salt)
         return fh
 
     def create(self, path, mode, fi=None):
@@ -240,8 +240,8 @@ class aesfs(Operations):
         logging.info("create - {}".format(full_path))
         # Create cipher object and write necessary data at the beginning
         fh = os.open(full_path, os.O_RDWR | os.O_CREAT, mode)
-        self.cryptrs[fh] = Cryptr(pw=self.pw)
-        os.write(fh, self.cryptrs[fh].get_rand_salt())
+        self.file_cryptrs[fh] = Cryptr(pw=self.pw)
+        os.write(fh, self.file_cryptrs[fh].get_rand_salt())
         return fh
 
     def read(self, path, length, offset, fh):
@@ -312,7 +312,7 @@ class aesfs(Operations):
         logging.info("release - {}, fh: {}".format(
             full_path,
             fh))
-        del self.cryptrs[fh]
+        del self.file_cryptrs[fh]
         return os.close(fh)
 
     def fsync(self, path, fdatasync, fh):
