@@ -344,7 +344,7 @@ if __name__ == '__main__':
                         help="implies -f, increase verbosity: " +
                         "-V: INFO, -VV: DEBUG")
     parser.add_argument("-v", "--version", action='version',
-                        version='0.3.0')
+                        version='0.4.0-alpha')
     args = parser.parse_args()
 
     main(args.decrypted, args.encrypted, args.foreground, args.verbosity)
