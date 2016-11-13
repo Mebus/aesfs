@@ -53,6 +53,7 @@ from __future__ import with_statement
 import os
 import sys
 import errno
+import base64
 import logging
 import argparse
 
@@ -68,6 +69,7 @@ class aesfs(Operations):
     def __init__(self, root, pw):
         self.root = root
         self.pw = pw
+        self.file_name_cryptr = Cryptr(pw=self.pw, rand_salt=b'0101010101010101')
         self.file_cryptrs = {}
 
     # Helpers
@@ -76,6 +78,14 @@ class aesfs(Operations):
     def _full_path(self, partial):
         if partial.startswith("/"):
             partial = partial[1:]
+        if partial:
+            p = []
+            for s in partial.split('/'):
+                # Filename encryption
+                e = self.file_name_cryptr.encrypt_ecb(s)
+                b = base64.b64encode(e).decode('utf-8')
+                p.append(b.replace('/', '_'))
+            partial = '/'.join(p)
         path = os.path.join(self.root, partial)
         return path
 
@@ -142,7 +152,14 @@ class aesfs(Operations):
 
         dirents = ['.', '..']
         if os.path.isdir(full_path):
-            dirents.extend(os.listdir(full_path))
+            p = []
+            items = os.listdir(full_path)
+            for item in items:
+                b = item.replace('_', '/')
+                e = base64.b64decode(b)
+                d = self.file_name_cryptr.decrypt_ecb(e)
+                p.append(d)
+            dirents.extend(p)
         for r in dirents:
             yield r
 

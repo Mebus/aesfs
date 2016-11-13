@@ -23,6 +23,9 @@ from os import urandom
 from Crypto.Cipher import AES
 from Crypto.Protocol.KDF import PBKDF2
 
+BS = 16
+pad = lambda s: s + (BS - len(s) % BS) * chr(BS - len(s) % BS)
+unpad = lambda s : s[0:-ord(s[-1])]
 
 class Cryptr:
     """
@@ -62,6 +65,18 @@ class Cryptr:
         # Use the PBKDF2 algorithm to obtain the encryption key
         self.crypt_key = PBKDF2(self.pw, self.rand_salt,
                                 dkLen=crypt_key_len, count=iterations)
+
+    def encrypt_ecb(self, pt):
+        cipher = AES.new(self.crypt_key, AES.MODE_ECB)
+        pt = pad(pt).encode('utf-8')
+        c = cipher.encrypt(pt)
+        return c
+
+    def decrypt_ecb(self, ct):
+        cipher = AES.new(self.crypt_key, AES.MODE_ECB)
+        p = cipher.decrypt(ct).decode('utf-8')
+        p = unpad(p)
+        return p
 
     def encrypt_gcm(self, pt):
         cipher = AES.new(self.crypt_key, AES.MODE_GCM)
