@@ -60,6 +60,7 @@ import argparse
 
 from fuse import FUSE, FuseOSError, Operations
 from cryptr import Cryptr
+from getpass import getpass
 
 
 class aesfs(Operations):
@@ -69,7 +70,7 @@ class aesfs(Operations):
 
     masterkey_len = 32
 
-    def __init__(self, root, pw):
+    def __init__(self, root):
         self.root = root
         self.masterkey = os.urandom(aesfs.masterkey_len)
         self.config_name = '.aesfs.json'
@@ -82,6 +83,13 @@ class aesfs(Operations):
             sys.exit(1)
 
         if not os.path.isfile(config_file):
+            # Set the password from command line prompt
+            pw = getpass("Set AesFS password: ")
+            re = getpass("Re-enter AesFS password: ")
+            if not pw == re:
+                sys.stderr.write("Passwords do not match\n")
+                sys.exit(2)
+            sys.stdout.write("Password set!\n")
             data = {}
             masterkey_cryptr = Cryptr(pw=pw)
             masterkey = masterkey_cryptr.get_rand_salt()
@@ -95,6 +103,8 @@ class aesfs(Operations):
         else:
             with open(config_file, 'r') as f:
                 data = json.load(f)
+            # Get the password
+            pw = getpass("AesFS password: ")
             masterkey = base64.b64decode(data['masterkey'])
             rand_salt = masterkey[:Cryptr.rand_salt_len]
             masterkey = masterkey[Cryptr.rand_salt_len:]
@@ -384,8 +394,7 @@ def main(mountpoint, root, foreground, verbosity):
     elif verbosity >= 1:
         logging.basicConfig(level=logging.INFO)
         foreground = True
-    pw = 'HJy6V3ZDSMqf7LhTcKQJFesmzjCAVOiA'
-    FUSE(aesfs(root, pw), mountpoint, nothreads=True, foreground=foreground)
+    FUSE(aesfs(root), mountpoint, nothreads=True, foreground=foreground)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
