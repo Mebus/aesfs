@@ -79,7 +79,7 @@ class aesfs(Operations):
         config_file = os.path.join(self.root, self.config_name)
 
         if os.listdir(self.root) and not os.path.isfile(config_file):
-            sys.stderr.write("encryption folder must be empty for initial setup\n")
+            sys.stderr.write("Encryption folder must be empty for initial setup\n")
             sys.exit(1)
 
         if not os.path.isfile(config_file):
