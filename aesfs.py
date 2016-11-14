@@ -67,9 +67,11 @@ class aesfs(Operations):
     Implements callbacks from the FUSE library and adds crypto behavior.
     """
 
+    masterkey_len = 32
+
     def __init__(self, root, pw):
         self.root = root
-        self.pw = pw
+        self.masterkey = os.urandom(aesfs.masterkey_len)
         self.config_name = '.aesfs.json'
         self.file_cryptrs = {}
 
@@ -80,17 +82,31 @@ class aesfs(Operations):
             sys.exit(1)
 
         if not os.path.isfile(config_file):
-            self.file_name_cryptr = Cryptr(pw=self.pw)
-            rand_salt = self.file_name_cryptr.get_rand_salt()
             data = {}
+            masterkey_cryptr = Cryptr(pw=pw)
+            masterkey = masterkey_cryptr.get_rand_salt()
+            masterkey += masterkey_cryptr.encrypt_gcm(self.masterkey)
+            data['masterkey'] = base64.b64encode(masterkey).decode('utf-8')
+            self.file_name_cryptr = Cryptr(pw=self.masterkey)
+            rand_salt = self.file_name_cryptr.get_rand_salt()
             data['rand_salt'] = base64.b64encode(rand_salt).decode('utf-8')
             with open(config_file, 'w') as f:
                 json.dump(data, f)
         else:
             with open(config_file, 'r') as f:
                 data = json.load(f)
+            masterkey = base64.b64decode(data['masterkey'])
+            rand_salt = masterkey[:Cryptr.rand_salt_len]
+            masterkey = masterkey[Cryptr.rand_salt_len:]
+            n = masterkey[:16]
+            masterkey = masterkey[16:]
+            m = masterkey[:16]
+            masterkey = masterkey[16:]
+            c = masterkey
+            masterkey_cryptr = Cryptr(pw=pw, rand_salt=rand_salt)
+            self.masterkey = masterkey_cryptr.decrypt_gcm(n, m, c)
             rand_salt = base64.b64decode(data['rand_salt'])
-            self.file_name_cryptr = Cryptr(pw=self.pw, rand_salt=rand_salt)
+            self.file_name_cryptr = Cryptr(pw=self.masterkey, rand_salt=rand_salt)
 
     # Helpers
     # =======
@@ -272,7 +288,7 @@ class aesfs(Operations):
             full_path,
             fh))
         rand_salt = os.read(fh, Cryptr.rand_salt_len)
-        self.file_cryptrs[fh] = Cryptr(pw=self.pw, rand_salt=rand_salt)
+        self.file_cryptrs[fh] = Cryptr(pw=self.masterkey, rand_salt=rand_salt)
         return fh
 
     def create(self, path, mode, fi=None):
@@ -280,7 +296,7 @@ class aesfs(Operations):
         logging.info("create - {}".format(full_path))
         # Create cipher object and write necessary data at the beginning
         fh = os.open(full_path, os.O_RDWR | os.O_CREAT, mode)
-        self.file_cryptrs[fh] = Cryptr(pw=self.pw)
+        self.file_cryptrs[fh] = Cryptr(pw=self.masterkey)
         os.write(fh, self.file_cryptrs[fh].get_rand_salt())
         return fh
 
