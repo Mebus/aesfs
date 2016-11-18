@@ -267,7 +267,7 @@ class aesfs(Operations):
         logging.info("rename - {} to {}".format(full_path_old, full_path_new))
         return os.rename(full_path_old, full_path_new)
 
-    def link(self, target, name):
+    def link(self, trgt, name):
         full_path_name = self._full_path(name)
         full_path_trgt = self._full_path(trgt)
         logging.info("link - {} to {}".format(full_path_name, full_path_trgt))
