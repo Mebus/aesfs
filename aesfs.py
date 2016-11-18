@@ -159,23 +159,23 @@ class aesfs(Operations):
 
     def access(self, path, mode):
         full_path = self._full_path(path)
-        logging.debug("access - {}".format(full_path))
+        logging.debug("access - {}".format(path))
         if not os.access(full_path, mode):
             raise FuseOSError(errno.EACCES)
 
     def chmod(self, path, mode):
         full_path = self._full_path(path)
-        logging.info("chmod - {}".format(full_path))
+        logging.info("chmod - {}".format(path))
         return os.chmod(full_path, mode)
 
     def chown(self, path, uid, gid):
         full_path = self._full_path(path)
-        logging.info("chown - {}".format(full_path))
+        logging.info("chown - {}".format(path))
         return os.chown(full_path, uid, gid)
 
     def getattr(self, path, fh=None):
         full_path = self._full_path(path)
-        logging.debug("getattr - {}".format(full_path))
+        logging.debug("getattr - {}".format(path))
         st = os.lstat(full_path)
         stat = dict((key, getattr(st, key)) for key in ('st_atime',
                                                         'st_ctime',
@@ -193,7 +193,7 @@ class aesfs(Operations):
 
     def readdir(self, path, fh):
         full_path = self._full_path(path)
-        logging.debug("readdir - {}".format(full_path))
+        logging.debug("readdir - {}".format(path))
 
         dirents = ['.', '..']
         if os.path.isdir(full_path):
@@ -213,7 +213,7 @@ class aesfs(Operations):
 
     def readlink(self, path):
         full_path = self._full_path(path)
-        logging.debug("readlink - {}".format(full_path))
+        logging.debug("readlink - {}".format(path))
         pathname = os.readlink(full_path)
         if pathname.startswith("/"):
             # Path name is absolute, sanitize it.
@@ -223,22 +223,22 @@ class aesfs(Operations):
 
     def mknod(self, path, mode, dev):
         full_path = self._full_path(path)
-        logging.info("mknod - {}".format(full_path))
+        logging.info("mknod - {}".format(path))
         return os.mknod(full_path, mode, dev)
 
     def rmdir(self, path):
         full_path = self._full_path(path)
-        logging.info("rmdir - {}".format(full_path))
+        logging.info("rmdir - {}".format(path))
         return os.rmdir(full_path)
 
     def mkdir(self, path, mode):
         full_path = self._full_path(path)
-        logging.info("mkdir - {}".format(full_path))
+        logging.info("mkdir - {}".format(path))
         return os.mkdir(full_path, mode)
 
     def statfs(self, path):
         full_path = self._full_path(path)
-        logging.debug("statfs - {}".format(full_path))
+        logging.debug("statfs - {}".format(path))
         stv = os.statvfs(full_path)
         return dict((key, getattr(stv, key)) for key in ('f_bavail',
                                                          'f_bfree',
@@ -253,29 +253,29 @@ class aesfs(Operations):
 
     def unlink(self, path):
         full_path = self._full_path(path)
-        logging.info("unlink - {}".format(full_path))
+        logging.info("unlink - {}".format(path))
         return os.unlink(full_path)
 
     def symlink(self, name, target):
         full_path = self._full_path(target)
-        logging.info("symlink - {}".format(full_path))
+        logging.info("symlink - {}".format(path))
         return os.symlink(name, full_path)
 
     def rename(self, old, new):
         full_path_old = self._full_path(old)
         full_path_new = self._full_path(new)
-        logging.info("rename - {} to {}".format(full_path_old, full_path_new))
+        logging.info("rename - {} to {}".format(old, new))
         return os.rename(full_path_old, full_path_new)
 
     def link(self, trgt, name):
         full_path_name = self._full_path(name)
         full_path_trgt = self._full_path(trgt)
-        logging.info("link - {} to {}".format(full_path_name, full_path_trgt))
+        logging.info("link - {} to {}".format(name, trgt))
         return os.link(full_path_trgt, full_path_name)
 
     def utimens(self, path, times=None):
         full_path = self._full_path(path)
-        logging.info("utimens - {}".format(full_path))
+        logging.info("utimens - {}".format(path))
         return os.utime(full_path, times)
 
     # File methods
@@ -294,7 +294,7 @@ class aesfs(Operations):
             flags += 1
         fh = os.open(full_path, flags)
         logging.info("open - {}, fh: {}".format(
-            full_path,
+            path,
             fh))
         rand_salt = os.read(fh, Cryptr.rand_salt_len)
         self.file_cryptrs[fh] = Cryptr(pw=self.masterkey, rand_salt=rand_salt)
@@ -302,7 +302,7 @@ class aesfs(Operations):
 
     def create(self, path, mode, fi=None):
         full_path = self._full_path(path)
-        logging.info("create - {}".format(full_path))
+        logging.info("create - {}".format(path))
         # Create cipher object and write necessary data at the beginning
         fh = os.open(full_path, os.O_RDWR | os.O_CREAT, mode)
         self.file_cryptrs[fh] = Cryptr(pw=self.masterkey)
@@ -312,7 +312,7 @@ class aesfs(Operations):
     def read(self, path, length, offset, fh):
         full_path = self._full_path(path)
         logging.info("read - {}, offset: {}, length: {}, fh: {}".format(
-            full_path,
+            path,
             offset,
             length,
             fh))
@@ -334,13 +334,16 @@ class aesfs(Operations):
 
     def write(self, path, buf, offset, fh):
         full_path = self._full_path(path)
-        logging.info("write - {}, offset: {}, fh: {}".format(
-            full_path,
-            offset,
-            fh))
         read_size = self.statfs(path)['f_frsize']
         start = self._real_offset(offset, 0, read_size)
         length = len(buf)
+        logging.info("write - {}, offset: {}, read_size: {}, start: {}, length: {}, fh: {}".format(
+            path,
+            offset,
+            read_size,
+            start,
+            length,
+            fh))
         pt = b''
         if offset % read_size != 0:
             pt += self._decrypt(read_size - length, start, fh)
@@ -375,14 +378,14 @@ class aesfs(Operations):
     def release(self, path, fh):
         full_path = self._full_path(path)
         logging.info("release - {}, fh: {}".format(
-            full_path,
+            path,
             fh))
         del self.file_cryptrs[fh]
         return os.close(fh)
 
     def fsync(self, path, fdatasync, fh):
         full_path = self._full_path(path)
-        logging.info("fsync - {}".format(full_path))
+        logging.info("fsync - {}".format(path))
         return self.flush(path, fh)
 
 
