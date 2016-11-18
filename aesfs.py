@@ -84,12 +84,11 @@ class aesfs(Operations):
 
         if not os.path.isfile(config_file):
             # Set the password from command line prompt
-            pw = getpass("Set AesFS password: ")
-            re = getpass("Re-enter AesFS password: ")
+            pw = getpass("Enter new AesFS password: ")
+            re = getpass("Retype new AesFS password: ")
             if not pw == re:
                 sys.stderr.write("Passwords do not match\n")
                 sys.exit(2)
-            sys.stdout.write("Password set!\n")
             data = {}
             masterkey_cryptr = Cryptr(pw=pw)
             masterkey = masterkey_cryptr.get_rand_salt()
