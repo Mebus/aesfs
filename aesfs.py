@@ -135,7 +135,7 @@ class aesfs(Operations):
         return path
 
     def _real_offset(self, offset, i, read_size):
-        return offset + (offset // read_size) * (16 + 16) + i * (16 + 16 + read_size) + Cryptr.rand_salt_len
+        return (offset // read_size) * read_size + (offset // read_size) * (16 + 16) + i * (16 + 16 + read_size) + Cryptr.rand_salt_len
 
     def _real_size(self, file_size, read_size):
         file_size -= Cryptr.rand_salt_len
