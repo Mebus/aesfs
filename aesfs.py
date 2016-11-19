@@ -90,11 +90,11 @@ class aesfs(Operations):
                 sys.stderr.write("Passwords do not match\n")
                 sys.exit(2)
             data = {}
-            masterkey_cryptr = Cryptr(pw=pw)
+            masterkey_cryptr = Cryptr(pw, '')
             masterkey = masterkey_cryptr.get_rand_salt()
             masterkey += masterkey_cryptr.encrypt_gcm(self.masterkey)
             data['masterkey'] = base64.b64encode(masterkey).decode('utf-8')
-            self.file_name_cryptr = Cryptr(pw=self.masterkey)
+            self.file_name_cryptr = Cryptr(self.masterkey, '')
             rand_salt = self.file_name_cryptr.get_rand_salt()
             data['rand_salt'] = base64.b64encode(rand_salt).decode('utf-8')
             with open(config_file, 'w') as f:
@@ -112,10 +112,10 @@ class aesfs(Operations):
             m = masterkey[:16]
             masterkey = masterkey[16:]
             c = masterkey
-            masterkey_cryptr = Cryptr(pw=pw, rand_salt=rand_salt)
+            masterkey_cryptr = Cryptr(pw, rand_salt)
             self.masterkey = masterkey_cryptr.decrypt_gcm(n, m, c)
             rand_salt = base64.b64decode(data['rand_salt'])
-            self.file_name_cryptr = Cryptr(pw=self.masterkey, rand_salt=rand_salt)
+            self.file_name_cryptr = Cryptr(self.masterkey, rand_salt)
 
     # Helpers
     # =======
@@ -302,7 +302,7 @@ class aesfs(Operations):
             flags,
             fh))
         rand_salt = os.read(fh, Cryptr.get_rand_salt_len())
-        self.file_cryptrs[fh] = Cryptr(pw=self.masterkey, rand_salt=rand_salt)
+        self.file_cryptrs[fh] = Cryptr(self.masterkey, rand_salt)
         return fh
 
     def create(self, path, mode, fi=None):
@@ -310,7 +310,7 @@ class aesfs(Operations):
         logging.info("create - {}".format(path))
         # Create cipher object and write necessary data at the beginning
         fh = os.open(full_path, os.O_RDWR | os.O_CREAT, mode)
-        self.file_cryptrs[fh] = Cryptr(pw=self.masterkey)
+        self.file_cryptrs[fh] = Cryptr(self.masterkey, '')
         os.write(fh, self.file_cryptrs[fh].get_rand_salt())
         return fh
 

@@ -34,13 +34,13 @@ class Cryptr:
     def get_rand_salt_len():
         return 16
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, pw=None, rand_salt=''):
         """
         Constructor.
 
         Args:
-            *args: Variable length argument list. Not used.
-            **kwargs: Arbitrary keyword arguments.
+            pw: password for key derivation
+            rand_salt: random salt for key derivation
 
         Returns:
             Nothing.
@@ -50,11 +50,13 @@ class Cryptr:
         """
 
         # Password to derive the keys from
-        self.pw = kwargs.get('pw', '')
+        self.pw = pw
 
         # In bytes, doc says it should be at least 8 bytes and has not to be
         # kept secret. Must be chosen randomly though
-        self.rand_salt = kwargs.get('rand_salt', urandom(Cryptr.get_rand_salt_len()))
+        if rand_salt == '':
+            rand_salt = urandom(Cryptr.get_rand_salt_len())
+        self.rand_salt = rand_salt
 
         # In bytes, AES 256 needs 32 bytes
         crypt_key_len = 32
