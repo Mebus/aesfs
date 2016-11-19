@@ -293,8 +293,9 @@ class aesfs(Operations):
         if flags % 2 != 0:
             flags += 1
         fh = os.open(full_path, flags)
-        logging.info("open - {}, fh: {}".format(
+        logging.info("open - {}, flags: {}, fh: {}".format(
             path,
+            flags,
             fh))
         rand_salt = os.read(fh, Cryptr.rand_salt_len)
         self.file_cryptrs[fh] = Cryptr(pw=self.masterkey, rand_salt=rand_salt)
