@@ -292,6 +292,10 @@ class aesfs(Operations):
         # See: https://github.com/mafintosh/fuse-bindings/issues/25
         if flags % 2 != 0:
             flags += 1
+        # We need to be able to write anywhere to the file, so if someone only
+        # wants to append, make sure we open the file for writing
+        if flags == 33794:
+            flags = 32770
         fh = os.open(full_path, flags)
         logging.info("open - {}, flags: {}, fh: {}".format(
             path,
