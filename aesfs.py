@@ -105,8 +105,8 @@ class aesfs(Operations):
             # Get the password
             pw = getpass("AesFS password: ")
             masterkey = base64.b64decode(data['masterkey'])
-            rand_salt = masterkey[:Cryptr.rand_salt_len]
-            masterkey = masterkey[Cryptr.rand_salt_len:]
+            rand_salt = masterkey[:Cryptr.get_rand_salt_len()]
+            masterkey = masterkey[Cryptr.get_rand_salt_len():]
             n = masterkey[:16]
             masterkey = masterkey[16:]
             m = masterkey[:16]
@@ -135,10 +135,10 @@ class aesfs(Operations):
         return path
 
     def _real_offset(self, offset, i, read_size):
-        return (offset // read_size) * read_size + (offset // read_size) * (16 + 16) + i * (16 + 16 + read_size) + Cryptr.rand_salt_len
+        return (offset // read_size) * read_size + (offset // read_size) * (16 + 16) + i * (16 + 16 + read_size) + Cryptr.get_rand_salt_len()
 
     def _real_size(self, file_size, read_size):
-        file_size -= Cryptr.rand_salt_len
+        file_size -= Cryptr.get_rand_salt_len()
         i = (file_size - 1) // (16 + 16 + read_size)
         file_size -= (i + 1) * (16 + 16)
         return file_size
@@ -301,7 +301,7 @@ class aesfs(Operations):
             path,
             flags,
             fh))
-        rand_salt = os.read(fh, Cryptr.rand_salt_len)
+        rand_salt = os.read(fh, Cryptr.get_rand_salt_len())
         self.file_cryptrs[fh] = Cryptr(pw=self.masterkey, rand_salt=rand_salt)
         return fh
 
