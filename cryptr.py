@@ -79,7 +79,6 @@ class Cryptr:
         cipher = AES.new(self.crypt_key, AES.MODE_ECB)
         p = cipher.decrypt(ct)
         p = unpad(p, AES.block_size)
-        p = p.decode('utf-8')
         return p
 
     def encrypt_gcm(self, pt):

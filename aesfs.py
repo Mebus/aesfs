@@ -103,7 +103,7 @@ class aesfs(Operations):
             with open(config_file, 'r') as f:
                 data = json.load(f)
             # Get the password
-            pw = getpass("AesFS password: ")
+            pw = getpass("AesFS password: ").encode('utf-8')
             masterkey = base64.b64decode(data['masterkey'])
             rand_salt = masterkey[:Cryptr.get_rand_salt_len()]
             masterkey = masterkey[Cryptr.get_rand_salt_len():]
@@ -206,6 +206,7 @@ class aesfs(Operations):
                 b = item.replace('_', '/')
                 e = base64.b64decode(b)
                 d = self.file_name_cryptr.decrypt_ecb(e)
+                d = d.decode('utf-8')
                 p.append(d)
             dirents.extend(p)
         for r in dirents:
