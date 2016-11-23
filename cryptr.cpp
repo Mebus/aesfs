@@ -14,6 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with AesFS.  If not, see <http://www.gnu.org/licenses/>.
 
+#include <iostream>
+using std::cout;
+using std::cerr;
+using std::endl;
+
 #include <string>
 using std::string;
 
@@ -21,13 +26,57 @@ using std::string;
 using boost::python::object;
 using boost::python::handle;
 
+#include "cryptopp/osrng.h"
+using CryptoPP::AutoSeededRandomPool;
+
+#include "cryptopp/integer.h"
+using CryptoPP::Integer;
+
+#include "cryptopp/pwdbased.h"
+using CryptoPP::PKCS5_PBKDF2_HMAC;
+
+#include "cryptopp/sha.h"
+using CryptoPP::SHA1;
+
+#include "cryptopp/hex.h"
+using CryptoPP::HexEncoder;
+using CryptoPP::HexDecoder;
+
+#include "cryptopp/filters.h"
+using CryptoPP::StringSink;
+using CryptoPP::StringSource;
+using CryptoPP::StreamTransformationFilter;
+using CryptoPP::AuthenticatedEncryptionFilter;
+using CryptoPP::AuthenticatedDecryptionFilter;
+
+#include "cryptopp/aes.h"
+using CryptoPP::AES;
+
+#include "cryptopp/modes.h"
+using CryptoPP::ECB_Mode;
+
+#include "cryptopp/gcm.h"
+using CryptoPP::GCM;
+
+#include "cryptopp/secblock.h"
+using CryptoPP::SecByteBlock;
+
 class Cryptr
 {
+private:
+    static const int TAG_SIZE   = 16;
+    static const int SALT_SIZE  = 16;
+    static const int NONCE_SIZE = 16;
+
+    byte *pw;
+    byte *rand_salt;
+
+    byte derived[AES::MAX_KEYLENGTH];
 public:
     Cryptr(string _pw, string _rand_salt);
     ~Cryptr() {}
 
-    static int GetSaltLength() { return 16; }
+    static int GetSaltLength() { return SALT_SIZE; }
     object EncryptECB(string pt);
     object DecryptECB(string ct);
     object EncryptGCM(string pt);
@@ -37,31 +86,125 @@ public:
 
 Cryptr::Cryptr(string _pw, string _rand_salt)
 {
+    pw = (byte*)_pw.c_str();
+
+    if (_rand_salt.empty())
+    {
+        AutoSeededRandomPool prng;
+
+        SecByteBlock r(GetSaltLength());
+        prng.GenerateBlock(r, r.size());
+
+        rand_salt = new byte[GetSaltLength()];
+        std::memcpy(rand_salt, r.BytePtr(), GetSaltLength());
+    }
+    else
+    {
+        rand_salt = (byte*)_rand_salt.c_str();
+    }
+
+    size_t plen = strlen((const char*)pw);
+    unsigned int iterations = 2000;
+
+    PKCS5_PBKDF2_HMAC<SHA1> pbkdf2;
+    pbkdf2.DeriveKey(derived, sizeof(derived), 0, pw, plen, rand_salt, (size_t)GetSaltLength(), iterations);
 }
 
 object Cryptr::EncryptECB(string pt)
 {
-    return object(handle<>(PyBytes_FromStringAndSize("", 0)));
+    ECB_Mode< AES >::Encryption e;
+    e.SetKey(derived, sizeof(derived));
+
+    string c;
+
+    // The StreamTransformationFilter adds padding
+    //  as required. ECB and CBC Mode must be padded
+    //  to the block size of the cipher.
+    StringSource(pt, true,
+        new StreamTransformationFilter(e,
+            new StringSink(c)
+        ) // StreamTransformationFilter
+    ); // StringSource
+
+    return object(handle<>(PyBytes_FromStringAndSize(c.c_str(), c.length())));
 }
 
 object Cryptr::DecryptECB(string ct)
 {
-    return object(handle<>(PyBytes_FromStringAndSize("", 0)));
+    string p;
+
+    ECB_Mode< AES >::Decryption d;
+    d.SetKey(derived, sizeof(derived));
+
+    // The StreamTransformationFilter removes
+    //  padding as required.
+    StringSource s(ct, true,
+        new StreamTransformationFilter(d,
+            new StringSink(p)
+        ) // StreamTransformationFilter
+    ); // StringSource
+
+    return object(handle<>(PyBytes_FromStringAndSize(p.c_str(), p.length())));
 }
 
 object Cryptr::EncryptGCM(string pt)
 {
-    return object(handle<>(PyBytes_FromStringAndSize("", 0)));
+    AutoSeededRandomPool prng;
+
+    SecByteBlock key(derived, sizeof(derived));
+
+    SecByteBlock iv(AES::BLOCKSIZE);
+    prng.GenerateBlock(iv, iv.size());
+    string n((const char*)iv.BytePtr(), iv.SizeInBytes());
+
+    GCM< AES >::Encryption e;
+    e.SetKeyWithIV(key, key.size(), iv, iv.size());
+
+    string c;
+
+    // The StreamTransformationFilter adds padding
+    //  as required. GCM and CBC Mode must be padded
+    //  to the block size of the cipher.
+    StringSource(pt, true,
+        new AuthenticatedEncryptionFilter(e,
+            new StringSink(c)
+        ) // StreamTransformationFilter
+    ); // StringSource
+
+    // Move TAG to the beginning
+    std::rotate(c.rbegin(), c.rbegin() + TAG_SIZE, c.rend());
+
+    string r = n + c;
+
+    return object(handle<>(PyBytes_FromStringAndSize(r.c_str(), r.length())));
 }
 
 object Cryptr::DecryptGCM(string n, string m, string c)
 {
-    return object(handle<>(PyBytes_FromStringAndSize("", 0)));
+    SecByteBlock key(derived, sizeof(derived));
+
+    byte *nonce = (byte*)n.c_str();
+    SecByteBlock iv(nonce, NONCE_SIZE);
+
+    GCM< AES >::Decryption d;
+    d.SetKeyWithIV(key, key.size(), iv, iv.size());
+
+    string p;
+
+    // The StreamTransformationFilter removes
+    //  padding as required.
+    StringSource s(c + m, true,
+        new AuthenticatedDecryptionFilter(d,
+            new StringSink(p)
+        ) // StreamTransformationFilter
+    ); // StringSource
+
+    return object(handle<>(PyBytes_FromStringAndSize(p.c_str(), p.length())));
 }
 
 object Cryptr::GetSalt()
 {
-    return object(handle<>(PyBytes_FromStringAndSize("", 0)));
+    return object(handle<>(PyBytes_FromStringAndSize((const char*)rand_salt, GetSaltLength())));
 }
 
 BOOST_PYTHON_MODULE(libcryptr)
