@@ -11,7 +11,7 @@ Simple AES-256-GCM encryption filesystem for FUSE written in Python.
 Runs with `Python 2.7.x` or `Python 3.5.x`. Just install the dependencies:
 
 ```
-pip install fusepy pycryptodome
+$ pip install fusepy pycryptodome
 ```
 
 Tested on:
@@ -24,13 +24,13 @@ Tested on:
 Simplest way of running the application. Create two folders:
 
 ```
-mkdir ~/encrypted/ ~/decrypted/
+$ mkdir ~/encrypted/ ~/decrypted/
 ```
 
 and execute:
 
 ```
-python aesfs.py ~/encrypted/ ~/decrypted/
+$ python aesfs.py ~/encrypted/ ~/decrypted/
 ```
 
 This will start the application in background.
@@ -44,6 +44,6 @@ Drive, etc.
 For further options execute:
 
 ```
-python aesfs.py -h
+$ python aesfs.py -h
 ```
 
