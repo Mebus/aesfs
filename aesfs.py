@@ -127,7 +127,7 @@ class aesfs(Operations):
             p = []
             for s in partial.split('/'):
                 # Filename encryption
-                e = self.file_name_cryptr.encrypt_ecb(s)
+                e = self.file_name_cryptr.encrypt_ecb(s.encode('utf-8'))
                 b = base64.b64encode(e).decode('utf-8')
                 p.append(b.replace('/', '_'))
             partial = '/'.join(p)
