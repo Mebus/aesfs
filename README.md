@@ -14,6 +14,26 @@ Runs with `Python 2.7.x` or `Python 3.5.x`. Just install the dependencies:
 $ pip install fusepy pycryptodome
 ```
 
+### Python 2.7.x:
+
+fusepy needs the default encoding to be set to `utf-8`. You can check that with:
+```
+$ python2
+Python 2.7.12 (default, Nov  7 2016, 11:55:55)
+[GCC 6.2.1 20160830] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import sys
+>>> sys.getdefaultencoding()
+'utf-8'
+>>>
+```
+
+If it says `'ascii` you have to change it to `utf-8`:
+```
+$ printf "import sys\n\nsys.setdefaultencoding('utf-8')\n" | \
+    sudo tee --append /usr/lib/python2.7/site-packages/sitecustomize.py > /dev/null
+```
+
 Tested on:
 
 * macOS Sierra
