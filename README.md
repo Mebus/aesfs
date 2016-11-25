@@ -34,7 +34,7 @@ $ printf "import sys\n\nsys.setdefaultencoding('utf-8')\n" | \
     sudo tee --append /usr/lib/python2.7/site-packages/sitecustomize.py > /dev/null
 ```
 
-Tested on:
+### Tested on
 
 * macOS Sierra
 * Arch Linux
