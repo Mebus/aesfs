@@ -70,7 +70,6 @@ class Cryptr:
 
     def encrypt_ecb(self, pt):
         cipher = AES.new(self.crypt_key, AES.MODE_ECB)
-        pt = pt.encode('utf-8')
         pt = pad(pt, AES.block_size)
         c = cipher.encrypt(pt)
         return c
