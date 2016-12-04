@@ -171,10 +171,14 @@ object Cryptr::EncryptGCM(string pt)
         ) // StreamTransformationFilter
     ); // StringSource
 
-    // Move TAG to the beginning
-    std::rotate(c.rbegin(), c.rbegin() + TAG_SIZE, c.rend());
+    // Extract TAG
+    int cl = c.length() - TAG_SIZE;
+    string m = c.substr(cl, c.length());
 
-    string r = n + c;
+    // Ciphertext without TAG
+    c = c.substr(0, cl);
+
+    string r = n + m + c;
 
     return object(handle<>(PyBytes_FromStringAndSize(r.c_str(), r.length())));
 }
