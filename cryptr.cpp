@@ -20,7 +20,9 @@ using std::cerr;
 using std::endl;
 
 #include <string>
+using std::hex;
 using std::string;
+using std::stringstream;
 
 #include <boost/python.hpp>
 using boost::python::object;
@@ -178,7 +180,21 @@ object Cryptr::EncryptGCM(string pt)
     // Ciphertext without TAG
     c = c.substr(0, cl);
 
-    string r = n + m + c;
+    // Length of ciphertext two bytes hex encoded, e.g.
+    // 4096 := 1000, 32 := 0020
+    stringstream ls;
+    ls.fill('0');
+    ls.width(4);
+    ls << hex << cl;
+
+    string l;
+    StringSource(ls.str(), true,
+        new HexDecoder(
+            new StringSink(l)
+        ) // HexDecoder
+    ); // StringSource
+
+    string r = n + m + l + c;
 
     return object(handle<>(PyBytes_FromStringAndSize(r.c_str(), r.length())));
 }

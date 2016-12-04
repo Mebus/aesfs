@@ -84,10 +84,13 @@ class Cryptr:
         cipher = AES.new(self.crypt_key, AES.MODE_GCM)
         n = cipher.nonce
         c = cipher.encrypt(pt)
+        # Length of ciphertext two bytes hex encoded, e.g.
+        # 4096 := b'\x10\x00', 32 := b'\x00\x20'
+        l = bytearray.fromhex(format(len(c), 'x').zfill(4))
         m = cipher.digest()
-        if not n or not m or not c:
+        if not n or not m or not l or not c:
             return b''
-        return n + m + c
+        return n + m + l + c
 
     def decrypt_gcm(self, n, m, c):
         if not n or not m or not c:

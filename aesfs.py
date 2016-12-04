@@ -111,7 +111,12 @@ class aesfs(Operations):
             masterkey = masterkey[16:]
             m = masterkey[:16]
             masterkey = masterkey[16:]
-            c = masterkey
+            if sys.version_info[0] < 3:
+                l = int(masterkey[:2].encode('hex'), 16)
+            else:
+                l = int(masterkey[:2].hex(), 16)
+            masterkey = masterkey[2:]
+            c = masterkey[:l]
             masterkey_cryptr = Cryptr(pw, rand_salt)
             self.masterkey = masterkey_cryptr.decrypt_gcm(n, m, c)
             rand_salt = base64.b64decode(data['rand_salt'])
@@ -135,19 +140,24 @@ class aesfs(Operations):
         return path
 
     def _real_offset(self, offset, i, read_size):
-        return (offset // read_size) * read_size + (offset // read_size) * (16 + 16) + i * (16 + 16 + read_size) + Cryptr.get_rand_salt_len()
+        return (offset // read_size) * read_size + (offset // read_size) * (16 + 16 + 2) + i * (16 + 16 + 2 + read_size) + Cryptr.get_rand_salt_len()
 
     def _real_size(self, file_size, read_size):
         file_size -= Cryptr.get_rand_salt_len()
-        i = (file_size - 1) // (16 + 16 + read_size)
-        file_size -= (i + 1) * (16 + 16)
+        i = (file_size - 1) // (16 + 16 + 2 + read_size)
+        file_size -= (i + 1) * (16 + 16 + 2)
         return file_size
 
-    def _decrypt(self, length, offset, fh):
+    def _decrypt(self, offset, fh):
         os.lseek(fh, offset, os.SEEK_SET)
         n = os.read(fh, 16)
         m = os.read(fh, 16)
-        c = os.read(fh, length)
+        l = os.read(fh, 2)
+        if sys.version_info[0] < 3:
+            l = int(l.encode('hex'), 16)
+        else:
+            l = int(l.hex(), 16)
+        c = os.read(fh, l)
         return self.file_cryptrs[fh].decrypt_gcm(n, m, c)
 
     def _encrypt(self, buf, offset, fh):
@@ -332,7 +342,7 @@ class aesfs(Operations):
         i = 0
         while True:
             start = self._real_offset(offset, i, read_size)
-            pt += self._decrypt(size, start, fh)
+            pt += self._decrypt(start, fh)
             if i == rounds:
                 break
             i += 1
@@ -351,9 +361,12 @@ class aesfs(Operations):
             length,
             fh))
         pt = b''
-        if offset % read_size != 0:
-            pt += self._decrypt(read_size - length, start, fh)
-        pt += buf
+        f = offset % read_size
+        if f != 0:
+            pt = b'' * (f + length)
+            d = self._decrypt(start, fh)
+            pt = d + pt[len(d):]
+        pt = pt[:f] + buf + pt[f + length:]
         rounds = (length - 1) // read_size
         i = 0
         while True:
