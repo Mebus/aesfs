@@ -346,6 +346,8 @@ class aesfs(Operations):
             if i == rounds:
                 break
             i += 1
+        f = offset % read_size
+        pt = pt[f:f + length]
         return pt
 
     def write(self, path, buf, offset, fh):
