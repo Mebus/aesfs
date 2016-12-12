@@ -153,6 +153,8 @@ class aesfs(Operations):
         n = os.read(fh, 16)
         m = os.read(fh, 16)
         l = os.read(fh, 2)
+        if not l:
+            return b''
         if sys.version_info[0] < 3:
             l = int(l.encode('hex'), 16)
         else:
