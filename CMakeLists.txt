@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 2.8.8)
 
 set(CMAKE_VERBOSE_MAKEFILE on)
 
+### libcryptr ###
+
 add_library(cryptr SHARED ./cryptr.cpp)
 
 find_package(PythonLibs 2.7.12 REQUIRED)
@@ -31,3 +33,10 @@ find_package(CryptoPP REQUIRED)
 if(CRYPTOPP_FOUND)
     target_link_libraries(cryptr ${CRYPTOPP_LIBRARIES} pthread)
 endif()
+
+### aesfs ###
+
+aux_source_directory(. SRC_LIST)
+list(REMOVE_ITEM SRC_LIST "./cryptr.cpp")
+
+add_executable(${PROJECT_NAME} ${SRC_LIST})
