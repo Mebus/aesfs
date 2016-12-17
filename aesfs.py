@@ -59,7 +59,7 @@ import logging
 import argparse
 
 from fuse import FUSE, FuseOSError, Operations
-from cryptr import Cryptr
+from libcryptr import Cryptr
 from getpass import getpass
 
 
