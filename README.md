@@ -1,20 +1,32 @@
 # AesFS: an encryption filesystem for FUSE based on AES
 
-**Note:** Not ready for real data! Experimental!
+**Note:** I use it for my real data, but I also have a backup of my unencrypted
+files.
 
 ## Introduction
 
 Simple AES-256-GCM encryption filesystem for FUSE written in Python.
 
+## Pre-requirements
+
+### macOS Sierra
+
+```
+$ brew install cmake boost boost-python cryptopp python
+```
+
 ## Installation
 
-Runs with `Python 2.7.x` or `Python 3.5.x`. Just install the dependencies:
+Runs with `Python 2.7.12` (macOS, Linux) or `Python 3.5.x` (Linux). Just
+install the dependencies:
+
+### fusepy
 
 ```
-$ pip install fusepy pycryptodome
+$ pip install fusepy
 ```
 
-### Python 2.7.x:
+### Python 2.7.12:
 
 fusepy needs the default encoding to be set to `utf-8`. You can check that with:
 ```
@@ -34,10 +46,25 @@ $ printf "import sys\n\nsys.setdefaultencoding('utf-8')\n" | \
     sudo tee --append /usr/lib/python2.7/site-packages/sitecustomize.py > /dev/null
 ```
 
-### Tested on
+### libcryptr
 
-* macOS Sierra
-* Arch Linux
+On macOS:
+```
+$ mkdir build
+$ cd build
+$ cmake -DPYTHON_LIBRARY=/usr//local/Cellar/python/2.7.12_2/Frameworks/Python.framework/Versions/2.7/lib/libpython2.7.dylib ..
+$ make all
+$ mv libcryptr.dylib ../libcryptr.so && cd ..
+```
+
+On Linux:
+```
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make all
+$ mv libcryptr.so ../libcryptr.so && cd ..
+```
 
 ## Usage
 
@@ -66,4 +93,9 @@ For further options execute:
 ```
 $ python aesfs.py -h
 ```
+
+## Tested on
+
+* macOS Sierra
+* Arch Linux
 
