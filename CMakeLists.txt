@@ -1,0 +1,33 @@
+project(aesfs)
+cmake_minimum_required(VERSION 2.8.8)
+
+set(CMAKE_VERBOSE_MAKEFILE on)
+
+add_library(cryptr SHARED ./cryptr.cpp)
+
+find_package(PythonLibs 2.7.12 REQUIRED)
+if(PythonLibs_FOUND)
+    include_directories("${PYTHON_INCLUDE_DIRS}")
+    target_link_libraries(cryptr ${PYTHON_LIBRARIES})
+endif()
+
+find_package(Boost REQUIRED)
+if(Boost_FOUND)
+    include_directories("${Boost_INCLUDE_DIRS}")
+    set(Boost_USE_STATIC_LIBS OFF)
+    set(Boost_USE_MULTITHREADED ON)
+    set(Boost_USE_STATIC_RUNTIME OFF)
+    if(PYTHONLIBS_VERSION_STRING MATCHES "^2*")
+        set(Boost_COMPONENTS python)
+    else()
+        set(Boost_COMPONENTS python3)
+    endif()
+    find_package(Boost REQUIRED COMPONENTS ${Boost_COMPONENTS})
+    target_link_libraries(cryptr ${Boost_LIBRARIES})
+endif()
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+find_package(CryptoPP REQUIRED)
+if(CRYPTOPP_FOUND)
+    target_link_libraries(cryptr ${CRYPTOPP_LIBRARIES} pthread)
+endif()
