@@ -40,3 +40,11 @@ aux_source_directory(. SRC_LIST)
 list(REMOVE_ITEM SRC_LIST "./cryptr.cpp")
 
 add_executable(${PROJECT_NAME} ${SRC_LIST})
+
+find_package(PkgConfig REQUIRED)
+if(PkgConfig_FOUND)
+    pkg_search_module(FUSE REQUIRED fuse)
+
+    target_compile_options(${PROJECT_NAME} PUBLIC ${FUSE_CFLAGS})
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${FUSE_LDFLAGS})
+endif()
