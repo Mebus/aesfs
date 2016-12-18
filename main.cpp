@@ -56,5 +56,6 @@ int main(int argc, char *argv[])
     aesfs_oper.removexattr  = xmp_removexattr;
 #endif
 
-    return 0;
+    umask(0);
+    return fuse_main(argc, argv, &aesfs_oper, NULL);
 }
