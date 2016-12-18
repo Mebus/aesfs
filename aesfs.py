@@ -269,9 +269,10 @@ class aesfs(Operations):
         logging.info("unlink - {}".format(path))
         return os.unlink(full_path)
 
-    def symlink(self, name, target):
-        full_path = self._full_path(target)
-        logging.info("symlink - {}".format(path))
+    def symlink(self, trgt, name):
+        full_path_name = self._full_path(name)
+        full_path_trgt = self._full_path(trgt)
+        logging.info("symlink - {} to {}".format(name, trgt))
         return os.symlink(name, full_path)
 
     def rename(self, old, new):
@@ -393,7 +394,7 @@ class aesfs(Operations):
 
     def flush(self, path, fh):
         full_path = self._full_path(path)
-        logging.info("release - {}, fh: {}".format(
+        logging.info("flush - {}, fh: {}".format(
             full_path,
             fh))
         return os.fsync(fh)
