@@ -18,6 +18,8 @@
 
 #include "wrap.hpp"
 
+#include <stdlib.h>
+
 struct fuse_operations aesfs_oper;
 
 int main(int argc, char *argv[])
@@ -57,5 +59,17 @@ int main(int argc, char *argv[])
 #endif
 
     umask(0);
+
+    // realpath - return the canonicalized absolute pathname
+    set_rootdir(realpath(argv[1], NULL));
+
+    // Cut out the root directory and only give FUSE the mount point etc.
+    // e.g. ~/encrypted/ ~/decrypted/ -f -> ~/decrypted/ -f
+    for(int i = 1; i < argc; i++)
+    {
+        argv[i] = argv[i + 1];
+    }
+    argc--;
+
     return fuse_main(argc, argv, &aesfs_oper, NULL);
 }

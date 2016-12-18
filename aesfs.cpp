@@ -38,6 +38,11 @@ AesFS* AesFS::Instance()
     return _instance;
 }
 
+void AesFS::SetRootDir(const char *path)
+{
+    _root = path;
+}
+
 AesFS::AesFS()
 {
 }

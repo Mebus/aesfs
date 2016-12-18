@@ -49,12 +49,16 @@ private:
 
     static AesFS *_instance;
 
+    const char *_root;
+
 public:
 
     static AesFS *Instance();
 
     AesFS();
     ~AesFS();
+
+    void SetRootDir(const char *path);
 
     int Getattr(const char *path, struct stat *stbuf);
     int Access(const char *path, int mask);

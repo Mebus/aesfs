@@ -19,6 +19,11 @@
 #include "wrap.hpp"
 #include "aesfs.hpp"
 
+void set_rootdir(const char *path)
+{
+    AesFS::Instance()->SetRootDir(path);
+}
+
 int xmp_getattr(const char *path, struct stat *stbuf)
 {
     return AesFS::Instance()->Getattr(path, stbuf);

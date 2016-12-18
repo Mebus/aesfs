@@ -26,6 +26,8 @@
 #include <sys/xattr.h>
 #endif
 
+void set_rootdir(const char *path);
+
 int xmp_getattr(const char *path, struct stat *stbuf);
 int xmp_access(const char *path, int mask);
 int xmp_readlink(const char *path, char *buf, size_t size);
