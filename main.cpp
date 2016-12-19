@@ -20,7 +20,40 @@
 
 #include <stdlib.h>
 
+#include <boost/log/trivial.hpp>
+#include <boost/log/expressions.hpp>
+namespace logging = boost::log;
+
 struct fuse_operations aesfs_oper;
+
+void init_log(size_t verbosity)
+{
+    // Always flush the logs
+    setbuf(stdout, NULL);
+    setbuf(stderr, NULL);
+
+    if (verbosity >= 2)
+    {
+        logging::core::get()->set_filter
+        (
+            logging::trivial::severity >= logging::trivial::debug
+        );
+    }
+    else if (verbosity >= 1)
+    {
+        logging::core::get()->set_filter
+        (
+            logging::trivial::severity >= logging::trivial::info
+        );
+    }
+    else
+    {
+        logging::core::get()->set_filter
+        (
+            logging::trivial::severity >= logging::trivial::warning
+        );
+    }
+}
 
 int main(int argc, char *argv[])
 {
@@ -57,6 +90,8 @@ int main(int argc, char *argv[])
     aesfs_oper.listxattr    = xmp_listxattr;
     aesfs_oper.removexattr  = xmp_removexattr;
 #endif
+
+    init_log(0);
 
     umask(0);
 

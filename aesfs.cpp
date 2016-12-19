@@ -61,6 +61,7 @@ int AesFS::Getattr(const char *path, struct stat *stbuf)
 {
     char fullPath[PATH_MAX];
     FullPath(fullPath, path);
+    BOOST_LOG_TRIVIAL(debug) << "Getattr - " << fullPath;
 
     int res;
 
@@ -75,6 +76,7 @@ int AesFS::Access(const char *path, int mask)
 {
     char fullPath[PATH_MAX];
     FullPath(fullPath, path);
+    BOOST_LOG_TRIVIAL(debug) << "Access - " << fullPath;
 
     int res;
 
@@ -89,6 +91,7 @@ int AesFS::Readlink(const char *path, char *buf, size_t size)
 {
     char fullPath[PATH_MAX];
     FullPath(fullPath, path);
+    BOOST_LOG_TRIVIAL(debug) << "Readlink - " << fullPath;
 
     int res;
 
@@ -105,6 +108,7 @@ int AesFS::Readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t of
 {
     char fullPath[PATH_MAX];
     FullPath(fullPath, path);
+    BOOST_LOG_TRIVIAL(debug) << "Readdir - " << fullPath;
 
     DIR *dp;
     struct dirent *de;
@@ -133,6 +137,7 @@ int AesFS::Mknod(const char *path, mode_t mode, dev_t rdev)
 {
     char fullPath[PATH_MAX];
     FullPath(fullPath, path);
+    BOOST_LOG_TRIVIAL(debug) << "Mknod - " << fullPath;
 
     int res;
 
@@ -156,6 +161,7 @@ int AesFS::Mkdir(const char *path, mode_t mode)
 {
     char fullPath[PATH_MAX];
     FullPath(fullPath, path);
+    BOOST_LOG_TRIVIAL(debug) << "Mkdir - " << fullPath;
 
     int res;
 
@@ -170,6 +176,7 @@ int AesFS::Unlink(const char *path)
 {
     char fullPath[PATH_MAX];
     FullPath(fullPath, path);
+    BOOST_LOG_TRIVIAL(debug) << "Unlink - " << fullPath;
 
     int res;
 
@@ -184,6 +191,7 @@ int AesFS::Rmdir(const char *path)
 {
     char fullPath[PATH_MAX];
     FullPath(fullPath, path);
+    BOOST_LOG_TRIVIAL(debug) << "Rmdir - " << fullPath;
 
     int res;
 
@@ -200,6 +208,7 @@ int AesFS::Symlink(const char *from, const char *to)
     char fullPathTrgt[PATH_MAX];
     FullPath(fullPathFrom, from);
     FullPath(fullPathTrgt, to);
+    BOOST_LOG_TRIVIAL(debug) << "Symlink from - " << fullPathFrom << " to " << fullPathTrgt;
 
     int res;
 
@@ -216,6 +225,7 @@ int AesFS::Rename(const char *from, const char *to)
     char fullPathTrgt[PATH_MAX];
     FullPath(fullPathFrom, from);
     FullPath(fullPathTrgt, to);
+    BOOST_LOG_TRIVIAL(debug) << "Rename from - " << fullPathFrom << " to " << fullPathTrgt;
 
     int res;
 
@@ -232,6 +242,7 @@ int AesFS::Link(const char *from, const char *to)
     char fullPathTrgt[PATH_MAX];
     FullPath(fullPathFrom, from);
     FullPath(fullPathTrgt, to);
+    BOOST_LOG_TRIVIAL(debug) << "Link from - " << fullPathFrom << " to " << fullPathTrgt;
 
     int res;
 
@@ -246,6 +257,7 @@ int AesFS::Chmod(const char *path, mode_t mode)
 {
     char fullPath[PATH_MAX];
     FullPath(fullPath, path);
+    BOOST_LOG_TRIVIAL(info) << "Chmod - " << fullPath;
 
     int res;
 
@@ -260,6 +272,7 @@ int AesFS::Chown(const char *path, uid_t uid, gid_t gid)
 {
     char fullPath[PATH_MAX];
     FullPath(fullPath, path);
+    BOOST_LOG_TRIVIAL(info) << "Chown - " << fullPath;
 
     int res;
 
@@ -274,6 +287,7 @@ int AesFS::Truncate(const char *path, off_t size)
 {
     char fullPath[PATH_MAX];
     FullPath(fullPath, path);
+    BOOST_LOG_TRIVIAL(info) << "Truncate - " << fullPath;
 
     int res;
 
@@ -289,6 +303,7 @@ int AesFS::Utimens(const char *path, const struct timespec ts[2])
 {
     char fullPath[PATH_MAX];
     FullPath(fullPath, path);
+    BOOST_LOG_TRIVIAL(debug) << "Utimens - " << fullPath;
 
     int res;
 
@@ -305,6 +320,7 @@ int AesFS::Open(const char *path, struct fuse_file_info *fi)
 {
     char fullPath[PATH_MAX];
     FullPath(fullPath, path);
+    BOOST_LOG_TRIVIAL(info) << "Open - " << fullPath;
 
     int res;
 
@@ -320,6 +336,7 @@ int AesFS::Read(const char *path, char *buf, size_t size, off_t offset, struct f
 {
     char fullPath[PATH_MAX];
     FullPath(fullPath, path);
+    BOOST_LOG_TRIVIAL(info) << "Read - " << fullPath;
 
     int fd;
     int res;
@@ -341,6 +358,7 @@ int AesFS::Write(const char *path, const char *buf, size_t size, off_t offset, s
 {
     char fullPath[PATH_MAX];
     FullPath(fullPath, path);
+    BOOST_LOG_TRIVIAL(info) << "Write - " << fullPath;
 
     int fd;
     int res;
@@ -362,6 +380,7 @@ int AesFS::Statfs(const char *path, struct statvfs *stbuf)
 {
     char fullPath[PATH_MAX];
     FullPath(fullPath, path);
+    BOOST_LOG_TRIVIAL(debug) << "Statfs - " << fullPath;
 
     int res;
 
@@ -376,6 +395,7 @@ int AesFS::Release(const char *path, struct fuse_file_info *fi)
 {
     char fullPath[PATH_MAX];
     FullPath(fullPath, path);
+    BOOST_LOG_TRIVIAL(info) << "Release - " << fullPath;
 
     /* Just a stub.	 This method is optional and can safely be left
        unimplemented */
@@ -389,6 +409,7 @@ int AesFS::Fsync(const char *path, int isdatasync, struct fuse_file_info *fi)
 {
     char fullPath[PATH_MAX];
     FullPath(fullPath, path);
+    BOOST_LOG_TRIVIAL(info) << "Fsync - " << fullPath;
 
     /* Just a stub.	 This method is optional and can safely be left
        unimplemented */
@@ -404,6 +425,7 @@ int AesFS::Fallocate(const char *path, int mode, off_t offset, off_t length, str
 {
     char fullPath[PATH_MAX];
     FullPath(fullPath, path);
+    BOOST_LOG_TRIVIAL(debug) << "Fallocate - " << fullPath;
 
     int fd;
     int res;
@@ -430,6 +452,7 @@ int AesFS::Setxattr(const char *path, const char *name, const char *value, size_
 {
     char fullPath[PATH_MAX];
     FullPath(fullPath, path);
+    BOOST_LOG_TRIVIAL(debug) << "Setxattr - " << fullPath;
 
     int res = lsetxattr(fullPath, name, value, size, flags);
     if (res == -1)
@@ -441,6 +464,7 @@ int AesFS::Getxattr(const char *path, const char *name, char *value, size_t size
 {
     char fullPath[PATH_MAX];
     FullPath(fullPath, path);
+    BOOST_LOG_TRIVIAL(debug) << "Getxattr - " << fullPath;
 
     int res = lgetxattr(fullPath, name, value, size);
     if (res == -1)
@@ -452,6 +476,7 @@ int AesFS::Listxattr(const char *path, char *list, size_t size)
 {
     char fullPath[PATH_MAX];
     FullPath(fullPath, path);
+    BOOST_LOG_TRIVIAL(debug) << "Listxattr - " << fullPath;
 
     int res = llistxattr(fullPath, list, size);
     if (res == -1)
@@ -463,6 +488,7 @@ int AesFS::Removexattr(const char *path, const char *name)
 {
     char fullPath[PATH_MAX];
     FullPath(fullPath, path);
+    BOOST_LOG_TRIVIAL(debug) << "Removexattr - " << fullPath;
 
     int res = lremovexattr(fullPath, name);
     if (res == -1)

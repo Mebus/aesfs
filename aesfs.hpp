@@ -43,6 +43,8 @@
 #include <sys/xattr.h>
 #endif
 
+#include <boost/log/trivial.hpp>
+
 class AesFS {
 
 private:
