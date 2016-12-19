@@ -19,10 +19,15 @@
 #include "wrap.hpp"
 
 #include <stdlib.h>
+#include <iostream>
+using namespace std;
 
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
 namespace logging = boost::log;
+
+#include <boost/program_options.hpp>
+namespace po = boost::program_options;
 
 struct fuse_operations aesfs_oper;
 
@@ -95,6 +100,23 @@ int main(int argc, char *argv[])
 
     umask(0);
 
+    try
+    {
+        po::options_description optional("optional arguments");
+        optional.add_options()
+                ("help,h", "show this help message and exit")
+                ;
+
+        po::variables_map vm;
+        po::store(po::parse_command_line(argc, argv, optional), vm);
+        po::notify(vm);
+
+        if (vm.count("help"))
+        {
+            cout << optional << endl;
+            return 0;
+        }
+
     // realpath - return the canonicalized absolute pathname
     set_rootdir(realpath(argv[1], NULL));
 
@@ -107,4 +129,14 @@ int main(int argc, char *argv[])
     argc--;
 
     return fuse_main(argc, argv, &aesfs_oper, NULL);
+    }
+    catch(exception& e)
+    {
+        cerr << "error: " << e.what();
+        return 1;
+    }
+    catch(...)
+    {
+        cerr << "Exception of unknown type!";
+    }
 }
