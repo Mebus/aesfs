@@ -38,6 +38,12 @@ AesFS* AesFS::Instance()
     return _instance;
 }
 
+void AesFS::FullPath(char dest[PATH_MAX], const char *path)
+{
+    strcpy(dest, _root);
+    strncat(dest, path, PATH_MAX);
+}
+
 void AesFS::SetRootDir(const char *path)
 {
     _root = path;
@@ -53,9 +59,12 @@ AesFS::~AesFS()
 
 int AesFS::Getattr(const char *path, struct stat *stbuf)
 {
+    char fullPath[PATH_MAX];
+    FullPath(fullPath, path);
+
     int res;
 
-    res = lstat(path, stbuf);
+    res = lstat(fullPath, stbuf);
     if (res == -1)
         return -errno;
 
@@ -64,9 +73,12 @@ int AesFS::Getattr(const char *path, struct stat *stbuf)
 
 int AesFS::Access(const char *path, int mask)
 {
+    char fullPath[PATH_MAX];
+    FullPath(fullPath, path);
+
     int res;
 
-    res = access(path, mask);
+    res = access(fullPath, mask);
     if (res == -1)
         return -errno;
 
@@ -75,9 +87,12 @@ int AesFS::Access(const char *path, int mask)
 
 int AesFS::Readlink(const char *path, char *buf, size_t size)
 {
+    char fullPath[PATH_MAX];
+    FullPath(fullPath, path);
+
     int res;
 
-    res = readlink(path, buf, size - 1);
+    res = readlink(fullPath, buf, size - 1);
     if (res == -1)
         return -errno;
 
@@ -88,13 +103,16 @@ int AesFS::Readlink(const char *path, char *buf, size_t size)
 
 int AesFS::Readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi)
 {
+    char fullPath[PATH_MAX];
+    FullPath(fullPath, path);
+
     DIR *dp;
     struct dirent *de;
 
     (void) offset;
     (void) fi;
 
-    dp = opendir(path);
+    dp = opendir(fullPath);
     if (dp == NULL)
         return -errno;
 
@@ -113,18 +131,21 @@ int AesFS::Readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t of
 
 int AesFS::Mknod(const char *path, mode_t mode, dev_t rdev)
 {
+    char fullPath[PATH_MAX];
+    FullPath(fullPath, path);
+
     int res;
 
     /* On Linux this could just be 'mknod(path, mode, rdev)' but this
        is more portable */
     if (S_ISREG(mode)) {
-        res = open(path, O_CREAT | O_EXCL | O_WRONLY, mode);
+        res = open(fullPath, O_CREAT | O_EXCL | O_WRONLY, mode);
         if (res >= 0)
             res = close(res);
     } else if (S_ISFIFO(mode))
-        res = mkfifo(path, mode);
+        res = mkfifo(fullPath, mode);
     else
-        res = mknod(path, mode, rdev);
+        res = mknod(fullPath, mode, rdev);
     if (res == -1)
         return -errno;
 
@@ -133,9 +154,12 @@ int AesFS::Mknod(const char *path, mode_t mode, dev_t rdev)
 
 int AesFS::Mkdir(const char *path, mode_t mode)
 {
+    char fullPath[PATH_MAX];
+    FullPath(fullPath, path);
+
     int res;
 
-    res = mkdir(path, mode);
+    res = mkdir(fullPath, mode);
     if (res == -1)
         return -errno;
 
@@ -144,9 +168,12 @@ int AesFS::Mkdir(const char *path, mode_t mode)
 
 int AesFS::Unlink(const char *path)
 {
+    char fullPath[PATH_MAX];
+    FullPath(fullPath, path);
+
     int res;
 
-    res = unlink(path);
+    res = unlink(fullPath);
     if (res == -1)
         return -errno;
 
@@ -155,9 +182,12 @@ int AesFS::Unlink(const char *path)
 
 int AesFS::Rmdir(const char *path)
 {
+    char fullPath[PATH_MAX];
+    FullPath(fullPath, path);
+
     int res;
 
-    res = rmdir(path);
+    res = rmdir(fullPath);
     if (res == -1)
         return -errno;
 
@@ -166,9 +196,14 @@ int AesFS::Rmdir(const char *path)
 
 int AesFS::Symlink(const char *from, const char *to)
 {
+    char fullPathFrom[PATH_MAX];
+    char fullPathTrgt[PATH_MAX];
+    FullPath(fullPathFrom, from);
+    FullPath(fullPathTrgt, to);
+
     int res;
 
-    res = symlink(from, to);
+    res = symlink(fullPathFrom, fullPathTrgt);
     if (res == -1)
         return -errno;
 
@@ -177,9 +212,14 @@ int AesFS::Symlink(const char *from, const char *to)
 
 int AesFS::Rename(const char *from, const char *to)
 {
+    char fullPathFrom[PATH_MAX];
+    char fullPathTrgt[PATH_MAX];
+    FullPath(fullPathFrom, from);
+    FullPath(fullPathTrgt, to);
+
     int res;
 
-    res = rename(from, to);
+    res = rename(fullPathFrom, fullPathTrgt);
     if (res == -1)
         return -errno;
 
@@ -188,9 +228,14 @@ int AesFS::Rename(const char *from, const char *to)
 
 int AesFS::Link(const char *from, const char *to)
 {
+    char fullPathFrom[PATH_MAX];
+    char fullPathTrgt[PATH_MAX];
+    FullPath(fullPathFrom, from);
+    FullPath(fullPathTrgt, to);
+
     int res;
 
-    res = link(from, to);
+    res = link(fullPathFrom, fullPathTrgt);
     if (res == -1)
         return -errno;
 
@@ -199,9 +244,12 @@ int AesFS::Link(const char *from, const char *to)
 
 int AesFS::Chmod(const char *path, mode_t mode)
 {
+    char fullPath[PATH_MAX];
+    FullPath(fullPath, path);
+
     int res;
 
-    res = chmod(path, mode);
+    res = chmod(fullPath, mode);
     if (res == -1)
         return -errno;
 
@@ -210,9 +258,12 @@ int AesFS::Chmod(const char *path, mode_t mode)
 
 int AesFS::Chown(const char *path, uid_t uid, gid_t gid)
 {
+    char fullPath[PATH_MAX];
+    FullPath(fullPath, path);
+
     int res;
 
-    res = lchown(path, uid, gid);
+    res = lchown(fullPath, uid, gid);
     if (res == -1)
         return -errno;
 
@@ -221,9 +272,12 @@ int AesFS::Chown(const char *path, uid_t uid, gid_t gid)
 
 int AesFS::Truncate(const char *path, off_t size)
 {
+    char fullPath[PATH_MAX];
+    FullPath(fullPath, path);
+
     int res;
 
-    res = truncate(path, size);
+    res = truncate(fullPath, size);
     if (res == -1)
         return -errno;
 
@@ -233,10 +287,13 @@ int AesFS::Truncate(const char *path, off_t size)
 #ifdef HAVE_UTIMENSAT
 int AesFS::Utimens(const char *path, const struct timespec ts[2])
 {
+    char fullPath[PATH_MAX];
+    FullPath(fullPath, path);
+
     int res;
 
     /* don't use utime/utimes since they follow symlinks */
-    res = utimensat(0, path, ts, AT_SYMLINK_NOFOLLOW);
+    res = utimensat(0, fullPath, ts, AT_SYMLINK_NOFOLLOW);
     if (res == -1)
         return -errno;
 
@@ -246,9 +303,12 @@ int AesFS::Utimens(const char *path, const struct timespec ts[2])
 
 int AesFS::Open(const char *path, struct fuse_file_info *fi)
 {
+    char fullPath[PATH_MAX];
+    FullPath(fullPath, path);
+
     int res;
 
-    res = open(path, fi->flags);
+    res = open(fullPath, fi->flags);
     if (res == -1)
         return -errno;
 
@@ -258,11 +318,14 @@ int AesFS::Open(const char *path, struct fuse_file_info *fi)
 
 int AesFS::Read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
+    char fullPath[PATH_MAX];
+    FullPath(fullPath, path);
+
     int fd;
     int res;
 
     (void) fi;
-    fd = open(path, O_RDONLY);
+    fd = open(fullPath, O_RDONLY);
     if (fd == -1)
         return -errno;
 
@@ -276,11 +339,14 @@ int AesFS::Read(const char *path, char *buf, size_t size, off_t offset, struct f
 
 int AesFS::Write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
+    char fullPath[PATH_MAX];
+    FullPath(fullPath, path);
+
     int fd;
     int res;
 
     (void) fi;
-    fd = open(path, O_WRONLY);
+    fd = open(fullPath, O_WRONLY);
     if (fd == -1)
         return -errno;
 
@@ -294,9 +360,12 @@ int AesFS::Write(const char *path, const char *buf, size_t size, off_t offset, s
 
 int AesFS::Statfs(const char *path, struct statvfs *stbuf)
 {
+    char fullPath[PATH_MAX];
+    FullPath(fullPath, path);
+
     int res;
 
-    res = statvfs(path, stbuf);
+    res = statvfs(fullPath, stbuf);
     if (res == -1)
         return -errno;
 
@@ -305,20 +374,26 @@ int AesFS::Statfs(const char *path, struct statvfs *stbuf)
 
 int AesFS::Release(const char *path, struct fuse_file_info *fi)
 {
+    char fullPath[PATH_MAX];
+    FullPath(fullPath, path);
+
     /* Just a stub.	 This method is optional and can safely be left
        unimplemented */
 
-    (void) path;
+    (void) fullPath;
     (void) fi;
     return 0;
 }
 
 int AesFS::Fsync(const char *path, int isdatasync, struct fuse_file_info *fi)
 {
+    char fullPath[PATH_MAX];
+    FullPath(fullPath, path);
+
     /* Just a stub.	 This method is optional and can safely be left
        unimplemented */
 
-    (void) path;
+    (void) fullPath;
     (void) isdatasync;
     (void) fi;
     return 0;
@@ -327,6 +402,9 @@ int AesFS::Fsync(const char *path, int isdatasync, struct fuse_file_info *fi)
 #ifdef HAVE_POSIX_FALLOCATE
 int AesFS::Fallocate(const char *path, int mode, off_t offset, off_t length, struct fuse_file_info *fi)
 {
+    char fullPath[PATH_MAX];
+    FullPath(fullPath, path);
+
     int fd;
     int res;
 
@@ -335,7 +413,7 @@ int AesFS::Fallocate(const char *path, int mode, off_t offset, off_t length, str
     if (mode)
         return -EOPNOTSUPP;
 
-    fd = open(path, O_WRONLY);
+    fd = open(fullPath, O_WRONLY);
     if (fd == -1)
         return -errno;
 
@@ -350,7 +428,10 @@ int AesFS::Fallocate(const char *path, int mode, off_t offset, off_t length, str
 /* xattr operations are optional and can safely be left unimplemented */
 int AesFS::Setxattr(const char *path, const char *name, const char *value, size_t size, int flags)
 {
-    int res = lsetxattr(path, name, value, size, flags);
+    char fullPath[PATH_MAX];
+    FullPath(fullPath, path);
+
+    int res = lsetxattr(fullPath, name, value, size, flags);
     if (res == -1)
         return -errno;
     return 0;
@@ -358,7 +439,10 @@ int AesFS::Setxattr(const char *path, const char *name, const char *value, size_
 
 int AesFS::Getxattr(const char *path, const char *name, char *value, size_t size)
 {
-    int res = lgetxattr(path, name, value, size);
+    char fullPath[PATH_MAX];
+    FullPath(fullPath, path);
+
+    int res = lgetxattr(fullPath, name, value, size);
     if (res == -1)
         return -errno;
     return res;
@@ -366,7 +450,10 @@ int AesFS::Getxattr(const char *path, const char *name, char *value, size_t size
 
 int AesFS::Listxattr(const char *path, char *list, size_t size)
 {
-    int res = llistxattr(path, list, size);
+    char fullPath[PATH_MAX];
+    FullPath(fullPath, path);
+
+    int res = llistxattr(fullPath, list, size);
     if (res == -1)
         return -errno;
     return res;
@@ -374,7 +461,10 @@ int AesFS::Listxattr(const char *path, char *list, size_t size)
 
 int AesFS::Removexattr(const char *path, const char *name)
 {
-    int res = lremovexattr(path, name);
+    char fullPath[PATH_MAX];
+    FullPath(fullPath, path);
+
+    int res = lremovexattr(fullPath, name);
     if (res == -1)
         return -errno;
     return 0;

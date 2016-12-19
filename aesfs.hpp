@@ -51,6 +51,8 @@ private:
 
     const char *_root;
 
+    void FullPath(char dest[PATH_MAX], const char *path);
+
 public:
 
     static AesFS *Instance();
