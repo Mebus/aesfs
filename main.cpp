@@ -108,12 +108,18 @@ int main(int argc, char *argv[])
     {
         string appName = fs::basename(argv[0]);
 
+        bool foreground;
+        string verbosity;
+
         string encrypted;
         string decrypted;
 
         po::options_description optional("optional arguments");
         optional.add_options()
                 ("help,h", "show this help message and exit")
+                ("foreground,f", "let the program run in the foreground")
+                ("verbosity,V", po::value<string>(&verbosity)->implicit_value(""), "implies -f, increase verbosity: -V: INFO, -VV: DEBUG")
+                ("version,v", "show program's version number and exit")
                 ;
 
         po::options_description positional("positional arguments");
@@ -149,22 +155,45 @@ int main(int argc, char *argv[])
             cout << visible << endl;
             return 0;
         }
+        if (vm.count("version"))
+        {
+            cout << "0.9.0-alpha" << endl;
+            return 0;
+        }
         if (!vm.count("encrypted") || !vm.count("decrypted"))
         {
             cerr << "error: the following arguments are required: ~/encrypted/, ~/decrypted/" << endl;
             return 1;
         }
+        if (vm.count("foreground"))
+        {
+            foreground = true;
+        }
+        if (vm.count("verbosity"))
+        {
+            verbosity += "V";
+            // Check that the string contains only 'V's
+            if (verbosity.find_first_not_of('V') != string::npos) {
+                cerr << "error: invalid verbosity level" << endl;
+                return 1;
+            }
+            foreground = true;
+            init_log(verbosity.size());
+        }
 
         // realpath - return the canonicalized absolute pathname
-        set_rootdir(realpath(argv[1], NULL));
+        set_rootdir(realpath(encrypted.c_str(), NULL));
 
         // Cut out the root directory and only give FUSE the mount point etc.
         // e.g. ~/encrypted/ ~/decrypted/ -f -> ~/decrypted/ -f
-        for(int i = 1; i < argc; i++)
+        argv[1] = (char*)decrypted.c_str();
+        argc = 2;
+        if (foreground)
         {
-            argv[i] = argv[i + 1];
+            string f = "-f";
+            argv[2] = (char*)f.c_str();
+            argc = 3;
         }
-        argc--;
         return fuse_main(argc, argv, &aesfs_oper, NULL);
     }
     catch(exception& e)
