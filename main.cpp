@@ -26,6 +26,9 @@ using namespace std;
 #include <boost/log/expressions.hpp>
 namespace logging = boost::log;
 
+#include <boost/filesystem.hpp>
+namespace fs = boost::filesystem;
+
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
 
@@ -100,21 +103,56 @@ int main(int argc, char *argv[])
 
     umask(0);
 
+    // Program options
     try
     {
+        string appName = fs::basename(argv[0]);
+
+        string encrypted;
+        string decrypted;
+
         po::options_description optional("optional arguments");
         optional.add_options()
                 ("help,h", "show this help message and exit")
                 ;
 
+        po::options_description positional("positional arguments");
+        positional.add_options()
+                ("encrypted", po::value<string>(&encrypted))
+                ("decrypted", po::value<string>(&decrypted))
+                ;
+
+        po::options_description options;
+        options.add(optional).add(positional);
+
+        po::options_description visible;
+        visible.add(optional);
+
+        po::positional_options_description positional_options;
+        positional_options.add("encrypted", 1);
+        positional_options.add("decrypted", 1);
+
         po::variables_map vm;
-        po::store(po::parse_command_line(argc, argv, optional), vm);
+        po::store(po::command_line_parser(argc, argv)
+                  .options(options)
+                  .positional(positional_options)
+                  .run(),
+                  vm);
         po::notify(vm);
 
         if (vm.count("help"))
         {
-            cout << optional << endl;
+            cout << "usage: " << appName << " [options] ~/encrypted/ ~/decrypted/" << endl << endl;
+            cout << "positional arguments:" << endl;
+            cout << "  ~/encrypted/" << "\t\t  " << "folder containing your encrypted files" << endl;
+            cout << "  ~/decrypted/" << "\t\t  " << "mountpoint containing the decrypted versions of your files" << endl;
+            cout << visible << endl;
             return 0;
+        }
+        if (!vm.count("encrypted") || !vm.count("decrypted"))
+        {
+            cerr << "error: the following arguments are required: ~/encrypted/, ~/decrypted/" << endl;
+            return 1;
         }
 
         // realpath - return the canonicalized absolute pathname
