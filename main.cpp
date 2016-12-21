@@ -117,18 +117,17 @@ int main(int argc, char *argv[])
             return 0;
         }
 
-    // realpath - return the canonicalized absolute pathname
-    set_rootdir(realpath(argv[1], NULL));
+        // realpath - return the canonicalized absolute pathname
+        set_rootdir(realpath(argv[1], NULL));
 
-    // Cut out the root directory and only give FUSE the mount point etc.
-    // e.g. ~/encrypted/ ~/decrypted/ -f -> ~/decrypted/ -f
-    for(int i = 1; i < argc; i++)
-    {
-        argv[i] = argv[i + 1];
-    }
-    argc--;
-
-    return fuse_main(argc, argv, &aesfs_oper, NULL);
+        // Cut out the root directory and only give FUSE the mount point etc.
+        // e.g. ~/encrypted/ ~/decrypted/ -f -> ~/decrypted/ -f
+        for(int i = 1; i < argc; i++)
+        {
+            argv[i] = argv[i + 1];
+        }
+        argc--;
+        return fuse_main(argc, argv, &aesfs_oper, NULL);
     }
     catch(exception& e)
     {
