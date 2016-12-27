@@ -19,6 +19,8 @@
 #ifndef aesfs_hpp
 #define aesfs_hpp
 
+#include "cryptr.hpp"
+
 #define FUSE_USE_VERSION 26
 
 #ifdef HAVE_CONFIG_H
