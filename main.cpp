@@ -67,7 +67,9 @@ int main(int argc, char *argv[])
 {
 
     aesfs_oper.getattr      = xmp_getattr;
+#ifndef __APPLE__
     aesfs_oper.access       = xmp_access;
+#endif
     aesfs_oper.readlink     = xmp_readlink;
     aesfs_oper.readdir      = xmp_readdir;
     aesfs_oper.mknod        = xmp_mknod;

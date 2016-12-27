@@ -29,10 +29,12 @@ int xmp_getattr(const char *path, struct stat *stbuf)
     return AesFS::Instance()->Getattr(path, stbuf);
 }
 
+#ifndef __APPLE__
 int xmp_access(const char *path, int mask)
 {
     return AesFS::Instance()->Access(path, mask);
 }
+#endif
 
 int xmp_readlink(const char *path, char *buf, size_t size)
 {

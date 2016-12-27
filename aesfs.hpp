@@ -65,7 +65,9 @@ public:
     void SetRootDir(const char *path);
 
     int Getattr(const char *path, struct stat *stbuf);
+#ifndef __APPLE__
     int Access(const char *path, int mask);
+#endif
     int Readlink(const char *path, char *buf, size_t size);
     int Readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi);
     int Mknod(const char *path, mode_t mode, dev_t rdev);

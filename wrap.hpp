@@ -29,7 +29,9 @@
 void set_rootdir(const char *path);
 
 int xmp_getattr(const char *path, struct stat *stbuf);
+#ifndef __APPLE__
 int xmp_access(const char *path, int mask);
+#endif
 int xmp_readlink(const char *path, char *buf, size_t size);
 int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi);
 int xmp_mknod(const char *path, mode_t mode, dev_t rdev);

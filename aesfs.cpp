@@ -72,6 +72,7 @@ int AesFS::Getattr(const char *path, struct stat *stbuf)
     return 0;
 }
 
+#ifndef __APPLE__
 int AesFS::Access(const char *path, int mask)
 {
     char fullPath[PATH_MAX];
@@ -86,6 +87,7 @@ int AesFS::Access(const char *path, int mask)
 
     return 0;
 }
+#endif
 
 int AesFS::Readlink(const char *path, char *buf, size_t size)
 {
