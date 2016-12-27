@@ -20,6 +20,7 @@
 #define aesfs_hpp
 
 #include "cryptr.hpp"
+#include "utils.hpp"
 
 #define FUSE_USE_VERSION 26
 

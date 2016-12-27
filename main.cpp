@@ -17,17 +17,11 @@
  */
 
 #include "wrap.hpp"
-
-#include <stdlib.h>
-#include <iostream>
-using namespace std;
+#include "utils.hpp"
 
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
 namespace logging = boost::log;
-
-#include <boost/filesystem.hpp>
-namespace fs = boost::filesystem;
 
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
