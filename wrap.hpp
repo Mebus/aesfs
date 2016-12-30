@@ -19,6 +19,8 @@
 #ifndef wrap_hpp
 #define wrap_hpp
 
+#include "aesfs.hpp"
+
 #define FUSE_USE_VERSION 26
 
 #include <fuse.h>
@@ -27,6 +29,7 @@
 #endif
 
 void set_rootdir(const char *path);
+void set_file_name_cryptr(const string password, const string rand_salt);
 
 int xmp_getattr(const char *path, struct stat *stbuf);
 #ifndef __APPLE__

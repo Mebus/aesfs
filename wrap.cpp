@@ -17,11 +17,15 @@
  */
 
 #include "wrap.hpp"
-#include "aesfs.hpp"
 
 void set_rootdir(const char *path)
 {
     AesFS::Instance()->SetRootDir(path);
+}
+
+void set_file_name_cryptr(const string password, const string rand_salt)
+{
+    AesFS::Instance()->SetFileNameCryptr(password, rand_salt);
 }
 
 int xmp_getattr(const char *path, struct stat *stbuf)

@@ -40,13 +40,41 @@ AesFS* AesFS::Instance()
 
 void AesFS::FullPath(char dest[PATH_MAX], const char *path)
 {
+    if (path[0] == '/')
+    {
+        path++;
+    }
+
+    string s(path);
+    if (strlen(path))
+    {
+        vector<string> partial;
+        char *pch, *saveptr;
+        pch = strtok_r ((char*)s.c_str(), "/", &saveptr);
+        while (pch != NULL)
+        {
+            string e = fromPythonObject(_file_name_cryptr.EncryptECB(pch));
+            string b = b64encode(e);
+            replace(b.begin(), b.end(), '/', '_');
+            partial.push_back(b);
+            pch = strtok_r (NULL, "/", &saveptr);
+        }
+        s = join(partial, "/");
+    }
+
     strcpy(dest, _root);
-    strncat(dest, path, PATH_MAX);
+    strncat(dest, "/", 1);
+    strncat(dest, s.c_str(), PATH_MAX);
 }
 
 void AesFS::SetRootDir(const char *path)
 {
     _root = path;
+}
+
+void AesFS::SetFileNameCryptr(const string password, const string rand_salt)
+{
+    _file_name_cryptr = Cryptr(password, rand_salt);
 }
 
 AesFS::AesFS()
@@ -123,12 +151,27 @@ int AesFS::Readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t of
         return -errno;
 
     while ((de = readdir(dp)) != NULL) {
+        string file_name(de->d_name);
+        if (file_name == "." ||
+                file_name == ".." ||
+                file_name == ".aesfs.json")
+        {
+            continue;
+        }
+        replace(file_name.begin(), file_name.end(), '_', '/');
+        string e = b64decode(file_name);
+        string d = fromPythonObject(_file_name_cryptr.DecryptECB(e));
+        strncpy(de->d_name, d.c_str(), d.length() + 1);
+        de->d_namlen = d.length();
+
         struct stat st;
         memset(&st, 0, sizeof(st));
         st.st_ino = de->d_ino;
         st.st_mode = de->d_type << 12;
         if (filler(buf, de->d_name, &st, 0))
+        {
             break;
+        }
     }
 
     closedir(dp);

@@ -41,6 +41,8 @@ list(REMOVE_ITEM SRC_LIST "./cryptr.cpp")
 
 add_executable(${PROJECT_NAME} ${SRC_LIST})
 
+target_link_libraries(${PROJECT_NAME} PUBLIC cryptr)
+
 find_package(Boost REQUIRED)
 if(Boost_FOUND)
     include_directories("${Boost_INCLUDE_DIRS}")

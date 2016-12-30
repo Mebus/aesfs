@@ -26,6 +26,10 @@ namespace logging = boost::log;
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
 
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+using namespace boost::property_tree;
+
 struct fuse_operations aesfs_oper;
 
 void init_log(size_t verbosity)
@@ -178,7 +182,42 @@ int main(int argc, char *argv[])
         }
 
         // realpath - return the canonicalized absolute pathname
-        set_rootdir(realpath(encrypted.c_str(), NULL));
+        char *root = realpath(encrypted.c_str(), NULL);
+        set_rootdir(root);
+
+        // Setup encryption folder
+        fs::path config_file = fs::path(root) / fs::path(".aesfs.json");
+        if (!fs::is_empty(fs::path(root)) && !fs::exists(config_file))
+        {
+            cerr << "Encryption folder must be empty for initial setup" << endl;
+            return 1;
+        }
+
+        if (!fs::exists(config_file))
+        {
+        }
+        else
+        {
+            ptree pt;
+            read_json(config_file.string(), pt);
+            string masterkey = b64decode(pt.get<string>("masterkey"));
+            // Random salt
+            string r = masterkey.substr( 0, 16);
+            // Nonce
+            string n = masterkey.substr(16, 16);
+            // MAC
+            string m = masterkey.substr(32, 16);
+            // Length: 0020(hex) := 32(dec)
+            unsigned int l = stoul(hex(masterkey.substr(48, 2)), NULL, 16);
+            // Ciphertext
+            string c = masterkey.substr(50, l);
+            // Decrypt actual masterkey
+            Cryptr masterkey_cryptr("", r);
+            masterkey = fromPythonObject(masterkey_cryptr.DecryptGCM(n, m, c));
+            // Create file name cryptr
+            string rand_salt = b64decode(pt.get<string>("rand_salt"));
+            set_file_name_cryptr(masterkey, rand_salt);
+        }
 
         // Cut out the root directory and only give FUSE the mount point etc.
         // e.g. ~/encrypted/ ~/decrypted/ -f -> ~/decrypted/ -f

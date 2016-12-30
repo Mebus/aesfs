@@ -54,6 +54,8 @@ private:
 
     static AesFS *_instance;
 
+    Cryptr _file_name_cryptr;
+
     const char *_root;
 
     void FullPath(char dest[PATH_MAX], const char *path);
@@ -66,6 +68,7 @@ public:
     ~AesFS();
 
     void SetRootDir(const char *path);
+    void SetFileNameCryptr(const string password, const string rand_salt);
 
     int Getattr(const char *path, struct stat *stbuf);
 #ifndef __APPLE__
