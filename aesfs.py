@@ -271,7 +271,7 @@ class aesfs(Operations):
 
     def symlink(self, name, target):
         full_path = self._full_path(target)
-        logging.info("symlink - {}".format(path))
+        logging.info("symlink - {}".format(target))
         return os.symlink(name, full_path)
 
     def rename(self, old, new):
