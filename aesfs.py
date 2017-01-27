@@ -272,7 +272,7 @@ class aesfs(Operations):
     def symlink(self, name, target):
         full_path = self._full_path(target)
         logging.info("symlink - {}".format(target))
-        return os.symlink(name, full_path)
+        raise FuseOSError(errno.ENOTSUP)
 
     def rename(self, old, new):
         full_path_old = self._full_path(old)
