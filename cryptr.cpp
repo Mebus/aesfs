@@ -63,6 +63,10 @@ using CryptoPP::GCM;
 #include "cryptopp/secblock.h"
 using CryptoPP::SecByteBlock;
 
+#if defined(CRYPTOPP_NO_GLOBAL_BYTE)
+using CryptoPP::byte;
+#endif
+
 class Cryptr
 {
 private:
